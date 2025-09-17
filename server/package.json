@@ -1,6 +1,8 @@
 {
   "scripts": {
-    "dev": "nodemon --exec ts-node src/index.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -24,6 +26,10 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.5.1",
-    "nodemon": "^3.1.10"
+    "@types/supertest": "^6.0.3",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4",
+    "ts-node-dev": "^2.0.0",
+    "vitest": "^3.2.4"
   }
 }

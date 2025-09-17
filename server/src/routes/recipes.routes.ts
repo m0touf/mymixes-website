@@ -7,6 +7,7 @@ const router = Router();
 
 router.get("/", asyncHandler(getRecipes));
 router.get("/:slug", asyncHandler(getRecipe));
-router.post("/", /* requireAuth, requireOwner, */ asyncHandler(postRecipe));
+router.post("/", asyncHandler(postRecipe)); 
+// router.post("/", /* requireAuth, requireOwner, */ asyncHandler(postRecipe));
 
 export default router;
