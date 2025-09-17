@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  //output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int   @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  role      Role     @default(USER) // OWNER (you) or USER
+  reviews   Review[]
+  recipes   Recipe[] // if you later allow community authorship
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Recipe {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String       @unique
+  imageUrl    String?
+  description String?
+  ingredients Ingredient[] // normalized table for simple querying
+  method      String
+  authorId    Int?
+  author      User?        @relation(fields: [authorId], references: [id])
+  reviews     Review[]
+  avgRating   Float        @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model IngredientType {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  ingredients Ingredient[]
+}
+
+model Ingredient {
+  id        Int    @id @default(autoincrement())
+  amount    String
+  recipeId  Int
+  typeId    Int
+  recipe    Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  type      IngredientType @relation(fields: [typeId], references: [id])
+}
+
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1..5
+  comment   String
+  recipeId  Int
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  OWNER
+  USER
+}
+
