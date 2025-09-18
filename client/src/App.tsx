@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { fetchRecipes, createRecipe, type Recipe } from "./services/api";
+import { fetchRecipes, createRecipe, updateRecipe, type Recipe } from "./services/api";
 
 // ---- Simple in-file mock router ----
 type Page =
@@ -22,6 +22,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [page, setPage] = useState<Page>({ name: "login" });
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [currentRecipe, setCurrentRecipe] = useState<Recipe | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,8 +55,20 @@ export default function App() {
   // --- Navigation helpers ---
   const goHome = () => setPage({ name: "home" });
   const goCreate = () => setPage({ name: "create" });
-  const goDetail = (id: number) => setPage({ name: "detail", id });
-  const goEdit = (id: number) => setPage({ name: "edit", id });
+  const goDetail = (id: number) => {
+    const recipe = recipes.find((r) => r.id === id);
+    if (recipe) {
+      setCurrentRecipe(recipe);
+      setPage({ name: "detail", id });
+    }
+  };
+  const goEdit = (id: number) => {
+    const recipe = recipes.find((r) => r.id === id) || currentRecipe;
+    if (recipe) {
+      setCurrentRecipe(recipe);
+      setPage({ name: "edit", id });
+    }
+  };
 
   // --- Auth mock ---
   const handleLogin = (pwd: string) => {
@@ -68,7 +81,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-800">
+    <div className="min-h-screen bg-gray-900 text-gray-100">
       <TopBar onLogoClick={goHome} isAdmin={isAdmin} />
       <main className="mx-auto max-w-6xl px-4 py-6">
         {page.name === "login" && <LoginCard onSubmit={handleLogin} />}
@@ -84,10 +97,10 @@ export default function App() {
             error={error}
           />
         )}
-        {page.name === "detail" && (
+        {page.name === "detail" && currentRecipe && (
           <RecipeDetail
             isAdmin={isAdmin}
-            recipe={recipes.find((r) => r.id === page.id)!}
+            recipe={currentRecipe}
             onBack={goHome}
             onEdit={() => goEdit(page.id)}
           />
@@ -99,7 +112,11 @@ export default function App() {
             onSubmit={async (data) => {
               try {
                 setLoading(true);
-                const newRecipe = await createRecipe(data);
+                const recipeData = {
+                  ...data,
+                  slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+                };
+                const newRecipe = await createRecipe(recipeData);
                 setRecipes([newRecipe, ...recipes]);
                 goHome();
               } catch (err) {
@@ -110,34 +127,28 @@ export default function App() {
             }}
           />
         )}
-        {page.name === "edit" && (
+        {page.name === "edit" && currentRecipe && (
           <RecipeForm
             mode="edit"
-            initial={recipes.find((r) => r.id === page.id)!}
+            initial={currentRecipe}
             onCancel={() => goDetail(page.id)}
-            onSubmit={(data) => {
-              setRecipes((prev) =>
-                prev.map((r) =>
-                  r.id === page.id
-                    ? {
-                        ...r,
-                        title: data.title,
-                        imageUrl: data.imageUrl,
-                        description: data.description,
-                        method: data.method,
-                        ingredients: data.ingredients.map((i) => ({
-                          id: (i as any).id || uid(),
-                          name: i.name,
-                          amount: i.amount,
-                          recipeId: r.id,
-                          typeId: (i as any).typeId ?? undefined,
-                          type: (i as any).type ?? undefined,
-                        })),
-                      }
-                    : r
-                ) as typeof prev
-              );
-              goDetail(page.id);
+            onSubmit={async (data) => {
+              try {
+                setLoading(true);
+                console.log('Updating recipe with data:', data);
+                const updatedRecipe = await updateRecipe(page.id, data);
+                console.log('Updated recipe received:', updatedRecipe);
+                setRecipes((prev) =>
+                  prev.map((r) => (r.id === page.id ? updatedRecipe : r))
+                );
+                setCurrentRecipe(updatedRecipe);
+                goDetail(page.id);
+              } catch (err) {
+                console.error('Error updating recipe:', err);
+                setError(err instanceof Error ? err.message : 'Failed to update recipe');
+              } finally {
+                setLoading(false);
+              }
             }}
           />
         )}
@@ -155,12 +166,12 @@ function TopBar({
   isAdmin: boolean;
 }) {
   return (
-    <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-10 border-b border-gray-700 bg-gray-800/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <button onClick={onLogoClick} className="text-xl font-bold tracking-tight">
           my<span className="text-pink-600">mixes</span>
         </button>
-        <div className="text-sm text-neutral-500">
+        <div className="text-sm text-gray-400">
           {isAdmin ? "Admin mode" : "Viewer"}
         </div>
       </div>
@@ -171,10 +182,10 @@ function TopBar({
 function LoginCard({ onSubmit }: { onSubmit: (pwd: string) => void }) {
   const [pwd, setPwd] = useState("");
   return (
-    <div className="mx-auto mt-24 max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+    <div className="mx-auto mt-24 max-w-md rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm">
       <h1 className="mb-2 text-2xl font-semibold">Admin Login</h1>
-      <p className="mb-6 text-sm text-neutral-500">
-        Enter password to manage recipes. (Try <code>admin</code>)
+      <p className="mb-6 text-sm text-gray-400">
+        Enter password to manage recipes. (Try <code className="text-pink-400">admin</code>)
       </p>
       <div className="flex gap-2">
         <input
@@ -182,7 +193,7 @@ function LoginCard({ onSubmit }: { onSubmit: (pwd: string) => void }) {
           onChange={(e) => setPwd(e.target.value)}
           type="password"
           placeholder="Password"
-          className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+          className="w-full rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
         />
         <button
           onClick={() => onSubmit(pwd)}
@@ -222,7 +233,7 @@ function HomeGrid({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search cocktails or ingredients…"
-            className="w-full rounded-2xl border border-neutral-300 bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full rounded-2xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
         {isAdmin && (
@@ -237,8 +248,8 @@ function HomeGrid({
       </div>
 
       {error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-red-600">Error: {error}</p>
+        <div className="rounded-2xl border border-red-600 bg-red-900/20 p-6 text-center">
+          <p className="text-red-400">Error: {error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="mt-2 rounded-xl bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
@@ -248,7 +259,7 @@ function HomeGrid({
         </div>
       ) : loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="text-neutral-500">Loading recipes...</div>
+          <div className="text-gray-400">Loading recipes...</div>
         </div>
       ) : recipes.length === 0 ? (
         <EmptyState isAdmin={isAdmin} onCreate={onCreate} />
@@ -257,10 +268,10 @@ function HomeGrid({
           {recipes.map((r) => (
             <article
               key={r.id}
-              className="group overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:shadow-md"
+              className="group overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm transition hover:shadow-md hover:border-gray-600"
             >
               <button onClick={() => onOpen(r.id)} className="block w-full text-left">
-                <div className="aspect-video w-full overflow-hidden bg-neutral-100">
+                <div className="aspect-video w-full overflow-hidden bg-gray-700">
                   {r.imageUrl ? (
                     <img
                       src={r.imageUrl}
@@ -268,17 +279,17 @@ function HomeGrid({
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-neutral-400">
+                    <div className="flex h-full w-full items-center justify-center text-gray-500">
                       No image
                     </div>
                   )}
                 </div>
                 <div className="p-4">
                   <h3 className="line-clamp-1 text-lg font-semibold">{r.title}</h3>
-                  <p className="mt-1 line-clamp-2 text-sm text-neutral-500">
+                  <p className="mt-1 line-clamp-2 text-sm text-gray-400">
                     {r.description || r.method}
                   </p>
-                  <div className="mt-3 text-xs text-neutral-500">
+                  <div className="mt-3 text-xs text-gray-500">
                     {r.ingredients.length} ingredients
                   </div>
                 </div>
@@ -293,8 +304,8 @@ function HomeGrid({
 
 function EmptyState({ isAdmin, onCreate }: { isAdmin: boolean; onCreate: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-white py-16 text-center">
-      <p className="mb-4 text-neutral-600">No cocktails yet.</p>
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-600 bg-gray-800 py-16 text-center">
+      <p className="mb-4 text-gray-400">No cocktails yet.</p>
       {isAdmin && (
         <button
           onClick={onCreate}
@@ -321,10 +332,10 @@ function RecipeDetail({
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
       <div className="md:col-span-2">
-        <button onClick={onBack} className="mb-4 text-sm text-neutral-500 hover:underline">
+        <button onClick={onBack} className="mb-4 text-sm text-gray-400 hover:underline">
           ← Back
         </button>
-        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm">
           {recipe.imageUrl && (
             <img src={recipe.imageUrl} alt={recipe.title} className="aspect-video w-full object-cover" />
           )}
@@ -334,29 +345,29 @@ function RecipeDetail({
               {isAdmin && (
                 <button
                   onClick={onEdit}
-                  className="rounded-xl border border-neutral-300 px-3 py-1.5 text-sm hover:bg-neutral-50"
+                  className="rounded-xl border border-gray-600 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700"
                 >
                   Edit
                 </button>
               )}
             </div>
             {recipe.description && (
-              <p className="mt-2 text-neutral-600">{recipe.description}</p>
+              <p className="mt-2 text-gray-400">{recipe.description}</p>
             )}
 
             <h2 className="mt-6 text-lg font-semibold">Ingredients</h2>
             <ul className="mt-3 space-y-2 pl-4">
               {recipe.ingredients.map((ing) => (
-                <li key={ing.id} className="flex items-center text-base text-neutral-700">
+                <li key={ing.id} className="flex items-center text-base text-gray-300">
                   <span className="mr-3 text-lg">•</span>
                   <span className="font-medium">{ing.name}</span>
-                  <span className="ml-2 text-neutral-600">{ing.amount}</span>
+                  <span className="ml-2 text-gray-400">{ing.amount}</span>
                 </li>
               ))}
             </ul>
 
             <h2 className="mt-6 text-lg font-semibold">How to make</h2>
-            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-neutral-800">
+            <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-300">
               {recipe.method}
             </p>
           </div>
@@ -364,13 +375,13 @@ function RecipeDetail({
       </div>
 
       <aside className="space-y-3">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <div className="text-sm text-neutral-600">Slug</div>
-          <div className="text-sm font-mono">/{recipe.slug}</div>
+        <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-sm">
+          <div className="text-sm text-gray-400">Slug</div>
+          <div className="text-sm font-mono text-gray-300">/{recipe.slug}</div>
         </div>
-        <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <div className="text-sm text-neutral-600">Average rating</div>
-          <div className="text-lg font-semibold">{recipe.avgRating ?? "—"}</div>
+        <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 shadow-sm">
+          <div className="text-sm text-gray-400">Average rating</div>
+          <div className="text-lg font-semibold text-gray-200">{recipe.avgRating ?? "—"}</div>
         </div>
       </aside>
     </div>
@@ -388,6 +399,7 @@ function RecipeForm({
   onCancel: () => void;
   onSubmit: (data: {
     title: string;
+    slug: string;
     imageUrl?: string;
     description?: string;
     method: string;
@@ -402,7 +414,7 @@ function RecipeForm({
     initial?.ingredients
       ? initial.ingredients.map((ing) => ({
           id: typeof ing.id === "string" ? ing.id : String(ing.id),
-          name: ing.name,
+          name: ing.type?.name || "",
           amount: ing.amount,
         }))
       : [{ id: uid(), name: "", amount: "" }]
@@ -423,7 +435,7 @@ function RecipeForm({
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex items-center justify-between">
-        <button onClick={onCancel} className="text-sm text-neutral-500 hover:underline">
+        <button onClick={onCancel} className="text-sm text-gray-400 hover:underline">
           ← {mode === "create" ? "Cancel" : "Back"}
         </button>
         <h1 className="text-xl font-semibold">
@@ -432,21 +444,21 @@ function RecipeForm({
         <div />
       </div>
 
-      <div className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <div className="space-y-6 rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="block text-sm">
-            <span className="mb-1 block text-neutral-600">Title</span>
+            <span className="mb-1 block text-gray-400">Title</span>
             <input
-              className="w-full rounded-xl border border-neutral-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Whiskey Sour"
             />
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block text-neutral-600">Image URL</span>
+            <span className="mb-1 block text-gray-400">Image URL</span>
             <input
-              className="w-full rounded-xl border border-neutral-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://..."
@@ -455,9 +467,9 @@ function RecipeForm({
         </div>
 
         <label className="block text-sm">
-          <span className="mb-1 block text-neutral-600">Short description (optional)</span>
+          <span className="mb-1 block text-gray-400">Short description (optional)</span>
           <input
-            className="w-full rounded-xl border border-neutral-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="w-full rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="A quick blurb for the card"
@@ -470,20 +482,20 @@ function RecipeForm({
             {ingredients.map((ing) => (
               <div key={ing.id} className="grid grid-cols-12 items-center gap-2">
                 <input
-                  className="col-span-6 rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  className="col-span-6 rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Ingredient (e.g., Lime juice)"
                   value={ing.name}
                   onChange={(e) => updateRow(ing.id, { name: e.target.value })}
                 />
                 <input
-                  className="col-span-4 rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  className="col-span-4 rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Amount (e.g., 1 oz)"
                   value={ing.amount}
                   onChange={(e) => updateRow(ing.id, { amount: e.target.value })}
                 />
                 <button
                   onClick={() => removeRow(ing.id)}
-                  className="col-span-2 rounded-xl border border-neutral-300 px-3 py-2 text-sm hover:bg-neutral-50"
+                  className="col-span-2 rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-600"
                 >
                   Remove
                 </button>
@@ -492,16 +504,16 @@ function RecipeForm({
           </div>
           <button
             onClick={addRow}
-            className="mt-3 rounded-xl border border-neutral-300 px-3 py-2 text-sm hover:bg-neutral-50"
+            className="mt-3 rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-gray-300 hover:bg-gray-600"
           >
             + Add ingredient
           </button>
         </div>
 
         <label className="block text-sm">
-          <span className="mb-1 block text-neutral-600">How to make</span>
+          <span className="mb-1 block text-gray-400">How to make</span>
           <textarea
-            className="h-40 w-full resize-y rounded-xl border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+            className="h-40 w-full resize-y rounded-xl border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
             placeholder="Steps, techniques, notes…"
@@ -511,7 +523,7 @@ function RecipeForm({
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={onCancel}
-            className="rounded-xl border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-50"
+            className="rounded-xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
           >
             Cancel
           </button>
@@ -520,11 +532,11 @@ function RecipeForm({
             onClick={() =>
               onSubmit({
                 title: title.trim(),
+                slug: title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                 imageUrl: imageUrl.trim() || undefined,
                 description: description.trim() || undefined,
                 method: method.trim(),
                 ingredients: ingredients.map((i) => ({
-                  id: i.id,
                   name: i.name.trim(),
                   amount: i.amount.trim(),
                 })),

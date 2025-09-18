@@ -21,7 +21,7 @@ export async function listRecipes(query?: string, page = 1, size = 12) {
       skip: (page - 1) * size,
       take: size,
       orderBy: { createdAt: "desc" },
-      include: { ingredients: true }
+      include: { ingredients: { include: { type: true } } }
     }),
     prisma.recipe.count({ where })
   ]);
@@ -31,7 +31,7 @@ export async function listRecipes(query?: string, page = 1, size = 12) {
 export async function getRecipeBySlug(slug: string) {
   return prisma.recipe.findUnique({
     where: { slug },
-    include: { ingredients: true, reviews: { orderBy: { createdAt: "desc" }, take: 25 } },
+    include: { ingredients: { include: { type: true } }, reviews: { orderBy: { createdAt: "desc" }, take: 25 } },
   });
 }
 
@@ -43,6 +43,41 @@ export async function createRecipe(data: CreateRecipeDTO, authorId?: number) {
       ...rest,
       authorId,
       ingredients: {
+        create: ingredients.map((ing) => {
+          // If client sent typeId, use that; otherwise use name with connectOrCreate
+          if (ing.typeId) {
+            return {
+              amount: ing.amount,
+              type: { connect: { id: ing.typeId } },
+            };
+          }
+          // ing.name is guaranteed by the validator if no typeId
+          return {
+            amount: ing.amount,
+            type: {
+              connectOrCreate: {
+                where: { name: ing.name! },
+                create: { name: ing.name! },
+              },
+            },
+          };
+        }),
+      },
+    },
+    include: { ingredients: { include: { type: true } } },
+  });
+}
+
+export async function updateRecipe(id: number, data: CreateRecipeDTO, authorId?: number) {
+  const { ingredients, ...rest } = data;
+
+  return prisma.recipe.update({
+    where: { id },
+    data: {
+      ...rest,
+      authorId,
+      ingredients: {
+        deleteMany: {}, // Remove all existing ingredients
         create: ingredients.map((ing) => {
           // If client sent typeId, use that; otherwise use name with connectOrCreate
           if (ing.typeId) {

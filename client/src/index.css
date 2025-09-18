@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+/* Dark theme custom properties */
+:root {
+  --bg-primary: #111827;      /* gray-900 */
+  --bg-secondary: #1f2937;    /* gray-800 */
+  --bg-tertiary: #374151;     /* gray-700 */
+  --text-primary: #f9fafb;    /* gray-100 */
+  --text-secondary: #d1d5db;  /* gray-300 */
+  --text-muted: #9ca3af;      /* gray-400 */
+  --border-primary: #374151;  /* gray-700 */
+  --border-secondary: #4b5563; /* gray-600 */
+  --accent: #db2777;          /* pink-600 */
+  --accent-hover: #be185d;    /* pink-700 */
+}
+
+/* Utility classes for consistent theming */
+.bg-card { background-color: var(--bg-secondary); }
+.bg-input { background-color: var(--bg-tertiary); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.border-primary { border-color: var(--border-primary); }
+.border-secondary { border-color: var(--border-secondary); }

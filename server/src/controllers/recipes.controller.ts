@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { CreateRecipeInput } from "../validators/recipes.schema";
-import { createRecipe, getRecipeBySlug, listRecipes } from "../services/recipes.service";
+import { createRecipe, getRecipeBySlug, listRecipes, updateRecipe } from "../services/recipes.service";
 
 export async function getRecipes(req: Request, res: Response) {
     const q = String(req.query.query ?? "");
@@ -18,7 +18,15 @@ export async function getRecipe(req: Request, res: Response) {
 
 export async function postRecipe(req: Request, res: Response) {
     const parsed = CreateRecipeInput.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const recipe = await createRecipe(parsed.data, req.user?.id);
     res.status(201).json(recipe);
+}
+
+export async function putRecipe(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const parsed = CreateRecipeInput.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
+    const recipe = await updateRecipe(id, parsed.data, req.user?.id);
+    res.json(recipe);
 }

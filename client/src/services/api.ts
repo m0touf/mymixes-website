@@ -27,6 +27,7 @@ export interface Ingredient {
 
 export interface CreateRecipeData {
   title: string;
+  slug: string;
   imageUrl?: string;
   description?: string;
   method: string;
@@ -76,6 +77,23 @@ export async function createRecipe(data: CreateRecipeData): Promise<Recipe> {
   
   if (!response.ok) {
     throw new Error(`Failed to create recipe: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function updateRecipe(id: number, data: CreateRecipeData): Promise<Recipe> {
+  const response = await fetch(`${API_BASE}/recipes/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    // Read the error details from the response body
+    const errorBody = await response.json();
+    throw new Error(`Failed to update recipe: ${errorBody.error ? JSON.stringify(errorBody.error) : response.statusText}`);
   }
   return response.json();
 }
