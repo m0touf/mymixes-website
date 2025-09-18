@@ -7,6 +7,7 @@ export function HomeGrid({
   search,
   setSearch,
   onCreate,
+  onQrManager,
   onOpen,
   loading,
   error,
@@ -23,13 +24,24 @@ export function HomeGrid({
           />
         </div>
         {isAdmin && (
-          <button
-            onClick={onCreate}
-            className="inline-flex items-center gap-2 rounded-2xl bg-pink-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pink-700"
-          >
-            <span className="text-lg">+</span>
-            New Recipe
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onCreate}
+              className="inline-flex items-center gap-2 rounded-2xl bg-pink-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pink-700"
+            >
+              <span className="text-lg">+</span>
+              New Recipe
+            </button>
+            {onQrManager && (
+              <button
+                onClick={onQrManager}
+                className="inline-flex items-center gap-2 rounded-2xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 shadow-sm hover:bg-gray-600"
+              >
+                <span className="text-lg">📱</span>
+                QR Codes
+              </button>
+            )}
+          </div>
         )}
       </div>
 

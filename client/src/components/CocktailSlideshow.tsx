@@ -21,7 +21,7 @@ export function CocktailSlideshow({ cocktails }: CocktailSlideshowProps) {
 
   if (cocktails.length === 0) {
     return (
-      <div className="flex h-96 items-center justify-center rounded-2xl border border-gray-700 bg-gray-800">
+      <div className="flex h-[500px] items-center justify-center rounded-2xl border border-gray-700 bg-gray-800">
         <div className="text-center">
           <div className="text-6xl mb-2">🍹</div>
           <p className="text-gray-400">No cocktails to display yet</p>
@@ -34,7 +34,7 @@ export function CocktailSlideshow({ cocktails }: CocktailSlideshowProps) {
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-gray-700 bg-gray-800">
-      <div className="relative h-96">
+      <div className="relative h-[500px]">
         {currentCocktail.imageUrl ? (
           <img
             src={currentCocktail.imageUrl}

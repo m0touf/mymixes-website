@@ -13,7 +13,7 @@ export function GuestGrid({
     <div>
       <div className="mb-6 text-center">
         <h1 className="text-3xl font-bold text-gray-100">Welcome to MyMixes</h1>
-        <p className="mt-2 text-gray-400">Discover amazing cocktail recipes</p>
+        <p className="mt-2 text-gray-400">Discover my amazing cocktail recipes</p>
       </div>
 
       <div className="mb-4 flex items-center gap-3">

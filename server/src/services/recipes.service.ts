@@ -21,7 +21,7 @@ export async function listRecipes(query?: string, page = 1, size = 12) {
       skip: (page - 1) * size,
       take: size,
       orderBy: { createdAt: "desc" },
-      include: { ingredients: { include: { type: true } } }
+      include: { ingredients: { include: { type: true } }, reviews: true }
     }),
     prisma.recipe.count({ where })
   ]);
@@ -64,7 +64,7 @@ export async function createRecipe(data: CreateRecipeDTO, authorId?: number) {
         }),
       },
     },
-    include: { ingredients: { include: { type: true } } },
+    include: { ingredients: { include: { type: true } }, reviews: true },
   });
 }
 
@@ -99,6 +99,6 @@ export async function updateRecipe(id: number, data: CreateRecipeDTO, authorId?:
         }),
       },
     },
-    include: { ingredients: { include: { type: true } } },
+    include: { ingredients: { include: { type: true } }, reviews: true },
   });
 }

@@ -14,6 +14,16 @@ const getAuthHeaders = () => {
   };
 };
 
+export interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  name?: string;
+  recipeId: number;
+  userId?: number;
+  createdAt: string;
+}
+
 export interface Recipe {
   id: number;
   title: string;
@@ -22,6 +32,7 @@ export interface Recipe {
   description?: string;
   method: string;
   ingredients: Ingredient[];
+  reviews?: Review[];
   avgRating?: number;
   createdAt: string;
   updatedAt: string;

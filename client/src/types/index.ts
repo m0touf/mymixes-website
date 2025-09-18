@@ -6,7 +6,9 @@ export type Page =
   | { name: "guest" }
   | { name: "create" }
   | { name: "detail"; id: number }
-  | { name: "edit"; id: number };
+  | { name: "edit"; id: number }
+  | { name: "review"; id: number }
+  | { name: "qr-manager" };
 
 // ---- Component Types ----
 export type Ingredient = { 
@@ -45,6 +47,7 @@ export interface HomeGridProps {
   search: string;
   setSearch: (s: string) => void;
   onCreate: () => void;
+  onQrManager?: () => void;
   onOpen: (id: number) => void;
   loading: boolean;
   error: string | null;

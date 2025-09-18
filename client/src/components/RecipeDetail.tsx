@@ -47,6 +47,42 @@ export function RecipeDetail({
             <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-300">
               {recipe.method}
             </p>
+
+            {/* Reviews Section */}
+            {recipe.reviews && recipe.reviews.length > 0 && (
+              <>
+                <h2 className="mt-8 text-lg font-semibold">Reviews</h2>
+                <div className="mt-4 space-y-4">
+                  {recipe.reviews.map((review) => (
+                    <div key={review.id} className="rounded-xl border border-gray-700 bg-gray-700/50 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-200">
+                            {review.name || 'Anonymous'}
+                          </span>
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <span
+                                key={star}
+                                className={`text-sm ${
+                                  star <= review.rating ? 'text-yellow-400' : 'text-gray-600'
+                                }`}
+                              >
+                                ⭐
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <span className="text-xs text-gray-400">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-300">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

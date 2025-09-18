@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { createRecipe, updateRecipe, type Recipe } from "./services/api";
 import { useAuth } from "./hooks/useAuth";
 import { useRecipes } from "./hooks/useRecipes";
-import { TopBar, LoginCard, LandingPage, HomeGrid, GuestGrid, RecipeDetail, RecipeForm } from "./components";
+import { TopBar, LoginCard, LandingPage, HomeGrid, GuestGrid, RecipeDetail, RecipeForm, ReviewPage, QrManager } from "./components";
 import type { Page, RecipeFormData } from "./types";
 
 // ---- Main App ----
@@ -20,6 +20,28 @@ export default function App() {
     page.name === "home" || page.name === "guest" || page.name === "landing"
   );
 
+  // Handle URL hash routing for QR code access
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith('#/review/')) {
+      const match = hash.match(/#\/review\/(\d+)/);
+      if (match) {
+        const recipeId = parseInt(match[1]);
+        const recipe = recipes.find(r => r.id === recipeId);
+        if (recipe) {
+          setCurrentRecipe(recipe);
+          setPage({ name: "review", id: recipeId });
+        }
+      }
+    }
+  }, [recipes]);
+
+  // Extract token from URL query parameters
+  const getUrlToken = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('token');
+  };
+
   // Update loading and error states from recipes hook
   useEffect(() => {
     setLoading(recipesLoading);
@@ -31,6 +53,7 @@ export default function App() {
   const goHome = () => setPage({ name: "home" });
   const goGuest = () => setPage({ name: "guest" });
   const goCreate = () => setPage({ name: "create" });
+  const goQrManager = () => setPage({ name: "qr-manager" });
   
   const goDetail = (id: number) => {
     const recipe = recipes.find((r) => r.id === id);
@@ -130,6 +153,7 @@ export default function App() {
             search={search}
             setSearch={setSearch}
             onCreate={goCreate}
+            onQrManager={goQrManager}
             onOpen={goDetail}
             loading={loading}
             error={error}
@@ -170,6 +194,25 @@ export default function App() {
             initial={currentRecipe}
             onCancel={() => goDetail(page.id)}
             onSubmit={handleUpdateRecipe}
+          />
+        )}
+
+        {page.name === "review" && currentRecipe && (
+          <ReviewPage
+            recipe={currentRecipe}
+            token={getUrlToken() || undefined}
+            onBack={() => {
+              // Clear the URL hash and go to landing page
+              window.location.hash = "";
+              setPage({ name: "landing" });
+            }}
+          />
+        )}
+
+        {page.name === "qr-manager" && (
+          <QrManager
+            recipes={recipes}
+            onBack={goHome}
           />
         )}
       </main>
