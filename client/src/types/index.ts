@@ -1,5 +1,6 @@
 // ---- Page Types ----
 export type Page =
+  | { name: "landing" }
   | { name: "login" }
   | { name: "home" }
   | { name: "guest" }
@@ -75,4 +76,10 @@ export interface RecipeFormProps {
 export interface EmptyStateProps {
   isAdmin: boolean;
   onCreate: () => void;
+}
+
+export interface LandingPageProps {
+  onAdminLogin: () => void;
+  onGuestAccess: () => void;
+  cocktails: import("../services/api").Recipe[];
 }
