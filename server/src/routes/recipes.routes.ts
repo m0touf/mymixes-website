@@ -1,14 +1,16 @@
 import { Router } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler";
+import { requireAdmin } from "../middlewares/auth";
 import { getRecipes, getRecipe, postRecipe, putRecipe } from "../controllers/recipes.controller";
-//import { requireAuth, requireOwner } from "../middlewares/requireOwner"; // swap to actual requireAuth/Owner as needed
 
 const router = Router();
 
+// Public routes
 router.get("/", asyncHandler(getRecipes));
 router.get("/:slug", asyncHandler(getRecipe));
-router.post("/", asyncHandler(postRecipe)); 
-router.put("/:id", asyncHandler(putRecipe));
-// router.post("/", /* requireAuth, requireOwner, */ asyncHandler(postRecipe));
+
+// Admin-only routes
+router.post("/", requireAdmin, asyncHandler(postRecipe)); 
+router.put("/:id", requireAdmin, asyncHandler(putRecipe));
 
 export default router;

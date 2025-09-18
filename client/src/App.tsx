@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { fetchRecipes, createRecipe, updateRecipe, type Recipe } from "./services/api";
+import { fetchRecipes, createRecipe, updateRecipe, login, verifyToken, logout, isAuthenticated, type Recipe } from "./services/api";
 
 // ---- Simple in-file mock router ----
 type Page =
@@ -70,21 +70,54 @@ export default function App() {
     }
   };
 
-  // --- Auth mock ---
-  const handleLogin = (pwd: string) => {
-    if (pwd === "admin") {
+  // --- Auth ---
+  const handleLogin = async (pwd: string) => {
+    try {
+      setLoading(true);
+      await login(pwd);
       setIsAdmin(true);
       goHome();
-    } else {
-      alert("Wrong password. Try 'admin'.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    setIsAdmin(false);
+    setPage({ name: "login" });
+  };
+
+  // Check authentication on app load
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (isAuthenticated()) {
+        try {
+          const isValid = await verifyToken();
+          if (isValid) {
+            setIsAdmin(true);
+            setPage({ name: "home" });
+          } else {
+            setIsAdmin(false);
+            setPage({ name: "login" });
+          }
+        } catch (err) {
+          setIsAdmin(false);
+          setPage({ name: "login" });
+        }
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <TopBar onLogoClick={goHome} isAdmin={isAdmin} />
+      <TopBar onLogoClick={goHome} isAdmin={isAdmin} onLogout={handleLogout} />
       <main className="mx-auto max-w-6xl px-4 py-6">
-        {page.name === "login" && <LoginCard onSubmit={handleLogin} />}
+        {page.name === "login" && <LoginCard onSubmit={handleLogin} loading={loading} error={error} />}
         {page.name === "home" && (
           <HomeGrid
             isAdmin={isAdmin}
@@ -161,9 +194,11 @@ export default function App() {
 function TopBar({
   onLogoClick,
   isAdmin,
+  onLogout,
 }: {
   onLogoClick: () => void;
   isAdmin: boolean;
+  onLogout: () => void;
 }) {
   return (
     <header className="sticky top-0 z-10 border-b border-gray-700 bg-gray-800/80 backdrop-blur">
@@ -171,22 +206,41 @@ function TopBar({
         <button onClick={onLogoClick} className="text-xl font-bold tracking-tight">
           my<span className="text-pink-600">mixes</span>
         </button>
-        <div className="text-sm text-gray-400">
-          {isAdmin ? "Admin mode" : "Viewer"}
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-400">
+            {isAdmin ? "Admin mode" : "Viewer"}
+          </div>
+          {isAdmin && (
+            <button
+              onClick={onLogout}
+              className="rounded-lg border border-gray-600 bg-gray-700 px-3 py-1 text-sm text-gray-300 hover:bg-gray-600"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
     </header>
   );
 }
 
-function LoginCard({ onSubmit }: { onSubmit: (pwd: string) => void }) {
+function LoginCard({ onSubmit, loading, error }: { 
+  onSubmit: (pwd: string) => void; 
+  loading: boolean; 
+  error: string | null;
+}) {
   const [pwd, setPwd] = useState("");
   return (
     <div className="mx-auto mt-24 max-w-md rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm">
       <h1 className="mb-2 text-2xl font-semibold">Admin Login</h1>
       <p className="mb-6 text-sm text-gray-400">
-        Enter password to manage recipes. (Try <code className="text-pink-400">admin</code>)
+        Enter password to manage recipes.
       </p>
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-600 bg-red-900/20 p-3">
+          <p className="text-sm text-red-400">{error}</p>
+        </div>
+      )}
       <div className="flex gap-2">
         <input
           value={pwd}
@@ -197,9 +251,14 @@ function LoginCard({ onSubmit }: { onSubmit: (pwd: string) => void }) {
         />
         <button
           onClick={() => onSubmit(pwd)}
-          className="rounded-xl bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700"
+          disabled={loading || !pwd.trim()}
+          className={`rounded-xl px-4 py-2 text-sm font-medium text-white ${
+            loading || !pwd.trim()
+              ? "cursor-not-allowed bg-gray-600"
+              : "bg-pink-600 hover:bg-pink-700"
+          }`}
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </div>
     </div>

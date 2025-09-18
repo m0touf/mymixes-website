@@ -1,5 +1,19 @@
 const API_BASE = 'http://localhost:4000';
 
+// Auth token management
+const getAuthToken = () => localStorage.getItem('authToken');
+const setAuthToken = (token: string) => localStorage.setItem('authToken', token);
+const removeAuthToken = () => localStorage.removeItem('authToken');
+
+// Helper function to get headers with auth token
+const getAuthHeaders = () => {
+  const token = getAuthToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
 export interface Recipe {
   id: number;
   title: string;
@@ -69,13 +83,15 @@ export async function fetchRecipe(slug: string): Promise<Recipe> {
 export async function createRecipe(data: CreateRecipeData): Promise<Recipe> {
   const response = await fetch(`${API_BASE}/recipes`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   
   if (!response.ok) {
+    if (response.status === 401) {
+      removeAuthToken();
+      throw new Error('Authentication required');
+    }
     throw new Error(`Failed to create recipe: ${response.statusText}`);
   }
   return response.json();
@@ -84,16 +100,74 @@ export async function createRecipe(data: CreateRecipeData): Promise<Recipe> {
 export async function updateRecipe(id: number, data: CreateRecipeData): Promise<Recipe> {
   const response = await fetch(`${API_BASE}/recipes/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
   
   if (!response.ok) {
+    if (response.status === 401) {
+      removeAuthToken();
+      throw new Error('Authentication required');
+    }
     // Read the error details from the response body
     const errorBody = await response.json();
     throw new Error(`Failed to update recipe: ${errorBody.error ? JSON.stringify(errorBody.error) : response.statusText}`);
   }
   return response.json();
+}
+
+// Authentication functions
+export interface LoginResponse {
+  token: string;
+  user: {
+    role: string;
+  };
+}
+
+export async function login(password: string): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json();
+    throw new Error(errorBody.error || 'Login failed');
+  }
+
+  const data = await response.json();
+  setAuthToken(data.token);
+  return data;
+}
+
+export async function verifyToken(): Promise<boolean> {
+  const token = getAuthToken();
+  if (!token) return false;
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/verify`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      removeAuthToken();
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    removeAuthToken();
+    return false;
+  }
+}
+
+export function logout(): void {
+  removeAuthToken();
+}
+
+export function isAuthenticated(): boolean {
+  return !!getAuthToken();
 }
