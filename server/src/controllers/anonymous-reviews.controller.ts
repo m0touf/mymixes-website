@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { createReview } from "../services/reviews.service";
-import { markTokenAsUsed } from "../services/qr.service";
 
 // Schema for anonymous reviews (includes name field)
 const AnonymousReviewInput = z.object({
@@ -29,9 +28,6 @@ export async function postAnonymousReview(req: Request, res: Response) {
       name: parsed.data.name
     });
 
-    // Mark the QR token as used (optional - you might want to allow multiple uses)
-    // await markTokenAsUsed(token);
-    
     res.status(201).json(review);
   } catch (error) {
     console.error("Error creating anonymous review:", error);

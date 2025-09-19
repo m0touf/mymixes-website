@@ -64,17 +64,6 @@ export async function validateQrToken(token: string): Promise<{ valid: boolean; 
   }
 }
 
-export async function markTokenAsUsed(token: string): Promise<void> {
-  try {
-    await prisma.qrToken.update({
-      where: { token },
-      data: { used: true, usedAt: new Date() },
-    });
-  } catch (error) {
-    console.error("Error marking token as used:", error);
-  }
-}
-
 export async function getActiveQrTokens(recipeId?: number) {
   const where = recipeId ? { recipeId } : {};
   

@@ -18,9 +18,9 @@ export const generateSlug = (title: string): string => {
 /**
  * Format ingredients for display
  */
-export const formatIngredients = (ingredients: Array<{ type?: { name: string }; amount: string }>) => {
+export const formatIngredients = (ingredients: Array<{ type?: { name: string }; amount: string; name?: string }>) => {
   return ingredients.map((ing) => ({
-    name: ing.type?.name || "",
+    name: ing.type?.name || ing.name || "",
     amount: ing.amount,
   }));
 };

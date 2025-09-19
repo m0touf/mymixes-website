@@ -89,11 +89,27 @@ export default function App() {
     }
   };
   
-  const goEdit = (id: number) => {
-    const recipe = recipes.find((r) => r.id === id) || currentRecipe;
-    if (recipe) {
-      setCurrentRecipe(recipe);
+  const goEdit = async (id: number) => {
+    // If we have a currentRecipe with ingredients, use it
+    if (currentRecipe && currentRecipe.ingredients && currentRecipe.ingredients.length > 0) {
+      setCurrentRecipe(currentRecipe);
       setPage({ name: "edit", id });
+      return;
+    }
+    
+    // Otherwise, fetch the full recipe data
+    try {
+      setLoading(true);
+      const recipe = recipes.find((r) => r.id === id);
+      if (recipe) {
+        const fullRecipe = await fetchRecipe(recipe.slug);
+        setCurrentRecipe(fullRecipe);
+        setPage({ name: "edit", id });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load recipe for editing');
+    } finally {
+      setLoading(false);
     }
   };
 
