@@ -7,9 +7,9 @@ export function LandingPage({ onAdminLogin, onGuestAccess, cocktails }: LandingP
       <div className="max-w-2xl space-y-8">
         {/* Welcome Message */}
         <div className="space-y-4">
-          <h1 className="text-5xl font-bold text-gray-100">
-            Welcome to my{" "}
-            <span className="text-pink-600">personal cocktail menu</span>!
+          <h1 className="text-5xl font-bold">
+            <span className="text-gray-100">my</span>
+            <span className="text-pink-600">mixes</span>
           </h1>
           {/* <p className="text-xl text-gray-400">
             Discover amazing cocktail recipes crafted with passion and precision.

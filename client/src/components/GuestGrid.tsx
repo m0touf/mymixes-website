@@ -12,7 +12,10 @@ export function GuestGrid({
   return (
     <div>
       <div className="mb-6 text-center">
-        <h1 className="text-3xl font-bold text-gray-100">Welcome to MyMixes</h1>
+        <h1 className="text-3xl font-bold">
+          <span className="text-gray-100">my</span>
+          <span className="text-pink-600">mixes</span>
+        </h1>
         <p className="mt-2 text-gray-400">Discover my amazing cocktail recipes</p>
       </div>
 
