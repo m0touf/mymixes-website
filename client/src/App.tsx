@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createRecipe, updateRecipe, fetchRecipe, type Recipe } from "./services/api";
+import { createRecipe, updateRecipe, fetchRecipe, deleteRecipe, type Recipe } from "./services/api";
 import { useAuth } from "./hooks/useAuth";
 import { useRecipes } from "./hooks/useRecipes";
 import { TopBar, LoginCard, LandingPage, HomeGrid, GuestGrid, RecipeDetail, RecipeForm, ReviewPage, QrManager } from "./components";
@@ -13,6 +13,7 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Use the recipes hook for fetching data
   const { recipes, setRecipes, loading: recipesLoading, error: recipesError } = useRecipes(
@@ -63,16 +64,34 @@ export default function App() {
     handleLogout();
     setPage({ name: "landing" });
   };
-  const goHome = () => setPage({ name: "home" });
-  const goGuest = () => {
+  const goHome = async () => {
+    setIsTransitioning(true);
+    // Wait for recipes to load if they're not already loaded
+    if (recipes.length === 0 && !recipesLoading) {
+      // Give a moment for the recipes to start loading
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    setPage({ name: "home" });
+    setIsTransitioning(false);
+  };
+  
+  const goGuest = async () => {
+    setIsTransitioning(true);
     // Logout when switching to guest mode
     handleLogout();
+    // Wait for recipes to load if they're not already loaded
+    if (recipes.length === 0 && !recipesLoading) {
+      // Give a moment for the recipes to start loading
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
     setPage({ name: "guest" });
+    setIsTransitioning(false);
   };
   const goCreate = () => setPage({ name: "create" });
   const goQrManager = () => setPage({ name: "qr-manager" });
   
   const goDetail = async (id: number) => {
+    setIsTransitioning(true);
     const recipe = recipes.find((r) => r.id === id);
     if (recipe) {
       try {
@@ -85,7 +104,10 @@ export default function App() {
         setError(err instanceof Error ? err.message : 'Failed to load recipe details');
       } finally {
         setLoading(false);
+        setIsTransitioning(false);
       }
+    } else {
+      setIsTransitioning(false);
     }
   };
   
@@ -113,12 +135,29 @@ export default function App() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!currentRecipe) return;
+    
+    try {
+      setLoading(true);
+      await deleteRecipe(currentRecipe.id);
+      // Remove from local recipes list
+      setRecipes(recipes.filter(r => r.id !== currentRecipe.id));
+      // Go back to home
+      await goHome();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete recipe');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // --- Auth ---
   const handleLogin = async (pwd: string) => {
     try {
       setLoading(true);
       await authHandleLogin(pwd);
-      setPage({ name: "home" });
+      await goHome();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -133,7 +172,7 @@ export default function App() {
       setLoading(true);
       const newRecipe = await createRecipe(data);
       setRecipes([newRecipe, ...recipes]);
-      goHome();
+      await goHome();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create recipe');
     } finally {
@@ -153,7 +192,7 @@ export default function App() {
         prev.map((r) => (r.id === page.id ? updatedRecipe : r))
       );
       setCurrentRecipe(updatedRecipe);
-      goDetail(page.id);
+      await goDetail(page.id);
     } catch (err) {
       console.error('Error updating recipe:', err);
       setError(err instanceof Error ? err.message : 'Failed to update recipe');
@@ -164,16 +203,30 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
+      {/* Loading Overlay */}
+      {(loading || isTransitioning || recipesLoading) && (
+        <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700">
+            <div className="flex items-center space-x-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-400"></div>
+              <span className="text-lg font-medium text-gray-100">
+                {isTransitioning ? "Loading page..." : "Loading recipes..."}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <TopBar 
-        onLogoClick={goLanding} 
-        isAdmin={isAdmin} 
+        onLogoClick={goLanding}
+        isAdmin={isAdmin}
       />
       
       <main className="mx-auto max-w-6xl px-4 py-6">
         {page.name === "landing" && (
           <LandingPage 
             onAdminLogin={() => setPage({ name: "login" })}
-            onGuestAccess={goGuest}
+            onGuestAccess={() => goGuest()}
             cocktails={recipes}
           />
         )}
@@ -211,15 +264,16 @@ export default function App() {
           <RecipeDetail
             isAdmin={isAdmin}
             recipe={currentRecipe}
-            onBack={isAdmin ? goHome : goGuest}
+            onBack={isAdmin ? () => goHome() : () => goGuest()}
             onEdit={() => goEdit(page.id)}
+            onDelete={isAdmin ? handleDelete : undefined}
           />
         )}
         
         {page.name === "create" && (
           <RecipeForm
             mode="create"
-            onCancel={goHome}
+            onCancel={() => goHome()}
             onSubmit={handleCreateRecipe}
           />
         )}
@@ -248,7 +302,7 @@ export default function App() {
         {page.name === "qr-manager" && (
           <QrManager
             recipes={recipes}
-            onBack={goHome}
+            onBack={() => goHome()}
           />
         )}
       </main>

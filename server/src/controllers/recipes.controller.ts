@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { CreateRecipeInput } from "../validators/recipes.schema";
-import { createRecipe, getRecipeBySlug, listRecipes, updateRecipe } from "../services/recipes.service";
+import { createRecipe, getRecipeBySlug, listRecipes, updateRecipe, deleteRecipe } from "../services/recipes.service";
 
 export async function getRecipes(req: Request, res: Response) {
     const q = String(req.query.query ?? "");
@@ -29,4 +29,10 @@ export async function putRecipe(req: Request, res: Response) {
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
     const recipe = await updateRecipe(id, parsed.data, req.user?.id);
     res.json(recipe);
+}
+
+export async function deleteRecipeController(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    await deleteRecipe(id);
+    res.status(204).send();
 }

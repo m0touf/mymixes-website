@@ -132,6 +132,21 @@ export async function updateRecipe(id: number, data: CreateRecipeData): Promise<
   return response.json();
 }
 
+export async function deleteRecipe(id: number): Promise<void> {
+  const response = await fetch(`${API_BASE}/recipes/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  
+  if (!response.ok) {
+    if (response.status === 401) {
+      removeAuthToken();
+      throw new Error('Authentication required');
+    }
+    throw new Error(`Failed to delete recipe: ${response.statusText}`);
+  }
+}
+
 // Authentication functions
 export interface LoginResponse {
   token: string;

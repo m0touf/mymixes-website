@@ -65,6 +65,7 @@ export interface RecipeDetailProps {
   recipe: import("../services/api").Recipe;
   onBack: () => void;
   onEdit: () => void;
+  onDelete?: () => void;
 }
 
 export interface RecipeFormProps {

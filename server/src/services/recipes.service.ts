@@ -135,3 +135,9 @@ export async function updateRecipe(id: number, data: CreateRecipeDTO, authorId?:
     include: { ingredients: { include: { type: true } }, reviews: true },
   });
 }
+
+export async function deleteRecipe(id: number) {
+  return prisma.recipe.delete({
+    where: { id },
+  });
+}
