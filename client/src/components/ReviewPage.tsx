@@ -22,6 +22,7 @@ export function ReviewPage({ recipe, token, onBack }: ReviewPageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hoveredStar, setHoveredStar] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +72,17 @@ export function ReviewPage({ recipe, token, onBack }: ReviewPageProps) {
   const handleInputChange = (field: keyof ReviewFormData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (error) setError(null);
+  };
+
+  const getRatingText = (rating: number) => {
+    switch (rating) {
+      case 1: return "Poor";
+      case 2: return "Fair";
+      case 3: return "Good";
+      case 4: return "Very Good";
+      case 5: return "Excellent";
+      default: return "";
+    }
   };
 
   if (submitted) {
@@ -143,23 +155,48 @@ export function ReviewPage({ recipe, token, onBack }: ReviewPageProps) {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Rating *
               </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => handleInputChange('rating', star)}
-                    className={`text-2xl transition-colors ${
-                      star <= formData.rating ? 'text-yellow-400' : 'text-gray-600'
-                    }`}
-                  >
-                    ⭐
-                  </button>
-                ))}
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const isActive = star <= (hoveredStar || formData.rating);
+                  const isSelected = star <= formData.rating;
+                  
+                  return (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => handleInputChange('rating', star)}
+                      onMouseEnter={() => setHoveredStar(star)}
+                      onMouseLeave={() => setHoveredStar(null)}
+                      className={`
+                        text-3xl transition-all duration-200 transform hover:scale-110 
+                        ${isActive 
+                          ? 'text-yellow-400 drop-shadow-lg' 
+                          : 'text-gray-600 hover:text-gray-400'
+                        }
+                        ${isSelected ? 'animate-pulse' : ''}
+                        hover:drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]
+                        focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 rounded
+                      `}
+                      title={`${star} star${star > 1 ? 's' : ''}`}
+                    >
+                      ⭐
+                    </button>
+                  );
+                })}
               </div>
-              <p className="text-xs text-gray-400 mt-1">
-                {formData.rating} out of 5 stars
-              </p>
+              <div className="mt-2 text-sm">
+                <p className="text-gray-400">
+                  {hoveredStar ? (
+                    <span className="text-yellow-400 font-medium">
+                      {hoveredStar} star{hoveredStar > 1 ? 's' : ''} - {getRatingText(hoveredStar)}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300">
+                      {formData.rating} out of 5 stars - {getRatingText(formData.rating)}
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
 
             {/* Comment Field */}

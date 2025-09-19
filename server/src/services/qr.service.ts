@@ -7,9 +7,12 @@ export interface QrTokenData {
   recipeId: number;
 }
 
-export async function generateSecureQrToken(recipeId: number): Promise<QrTokenData> {
-  // Check if recipe exists
-  const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
+export async function generateSecureQrToken(recipeId: number): Promise<QrTokenData & { id: string; recipe: { id: number; title: string; slug: string } }> {
+  // Check if recipe exists and get recipe info in one query
+  const recipe = await prisma.recipe.findUnique({ 
+    where: { id: recipeId },
+    select: { id: true, title: true, slug: true }
+  });
   if (!recipe) {
     throw new Error("Recipe not found");
   }
@@ -22,7 +25,7 @@ export async function generateSecureQrToken(recipeId: number): Promise<QrTokenDa
   expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
   // Store token in database
-  await prisma.qrToken.create({
+  const qrToken = await prisma.qrToken.create({
     data: {
       token,
       recipeId,
@@ -30,7 +33,7 @@ export async function generateSecureQrToken(recipeId: number): Promise<QrTokenDa
     },
   });
 
-  return { token, expiresAt, recipeId };
+  return { id: qrToken.id, token, expiresAt, recipeId, recipe };
 }
 
 export async function validateQrToken(token: string): Promise<{ valid: boolean; recipeId?: number }> {
@@ -87,4 +90,37 @@ export async function getActiveQrTokens(recipeId?: number) {
     },
     orderBy: { createdAt: "desc" },
   });
+}
+
+export async function deleteQrToken(tokenId: string): Promise<void> {
+  const qrToken = await prisma.qrToken.findUnique({
+    where: { id: tokenId },
+  });
+
+  if (!qrToken) {
+    throw new Error("QR token not found");
+  }
+
+  await prisma.qrToken.delete({
+    where: { id: tokenId },
+  });
+}
+
+export async function getQrTokenCounts(): Promise<Record<number, number>> {
+  const counts = await prisma.qrToken.groupBy({
+    by: ['recipeId'],
+    where: {
+      expiresAt: { gt: new Date() }, // Only count active tokens
+    },
+    _count: {
+      id: true,
+    },
+  });
+
+  const result: Record<number, number> = {};
+  counts.forEach(count => {
+    result[count.recipeId] = count._count.id;
+  });
+
+  return result;
 }

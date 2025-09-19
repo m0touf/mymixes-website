@@ -31,8 +31,6 @@ export type RecipeFormData = {
 export interface TopBarProps {
   onLogoClick: () => void;
   isAdmin: boolean;
-  onLogout: () => void;
-  onLogin: () => void;
 }
 
 export interface LoginCardProps {

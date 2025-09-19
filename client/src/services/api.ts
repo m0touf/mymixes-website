@@ -36,6 +36,11 @@ export interface Recipe {
   avgRating?: number;
   createdAt: string;
   updatedAt: string;
+  // For list view - count instead of full data
+  _count?: {
+    ingredients: number;
+    reviews: number;
+  };
 }
 
 export interface Ingredient {
@@ -168,7 +173,8 @@ export async function verifyToken(): Promise<boolean> {
       return false;
     }
 
-    return true;
+    const data = await response.json();
+    return data.valid === true;
   } catch (error) {
     removeAuthToken();
     return false;

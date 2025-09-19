@@ -70,7 +70,7 @@ export function GuestGrid({
                     {r.description || r.method}
                   </p>
                   <div className="mt-3 text-xs text-gray-500">
-                    {r.ingredients.length} ingredients
+                    {r._count?.ingredients || r.ingredients?.length || 0} ingredients
                   </div>
                 </div>
               </button>

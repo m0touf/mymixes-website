@@ -41,6 +41,10 @@ model Recipe {
   avgRating   Float        @default(0)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@index([createdAt])
+  @@index([title])
+  @@index([avgRating])
 }
 
 model IngredientType {
@@ -56,6 +60,9 @@ model Ingredient {
   typeId    Int
   recipe    Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   type      IngredientType @relation(fields: [typeId], references: [id])
+
+  @@index([recipeId])
+  @@index([typeId])
 }
 
 
@@ -69,6 +76,9 @@ model Review {
   userId    Int?
   user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([recipeId])
+  @@index([createdAt])
 }
 
 model QrToken {
@@ -80,6 +90,10 @@ model QrToken {
   used      Boolean  @default(false)
   usedAt    DateTime?
   createdAt DateTime @default(now())
+
+  @@index([recipeId])
+  @@index([expiresAt])
+  @@index([used])
 }
 
 enum Role {

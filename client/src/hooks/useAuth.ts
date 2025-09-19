@@ -6,21 +6,31 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
-    if (isAuthenticated()) {
-      try {
-        const isValid = await verifyToken();
-        setIsAdmin(isValid);
-      } catch (err) {
-        setIsAdmin(false);
-      }
-    } else {
+    setLoading(true);
+    try {
+      const isValid = await verifyToken();
+      setIsAdmin(isValid);
+    } catch (err) {
+      console.error("Auth check failed:", err);
       setIsAdmin(false);
+      // Clear any invalid token
+      logout();
     }
     setLoading(false);
   };
 
+  // Force logout on page refresh/load
+  const forceLogout = () => {
+    logout();
+    setIsAdmin(false);
+  };
+
   useEffect(() => {
-    checkAuth();
+    // Always start as not admin on page load/refresh
+    setIsAdmin(false);
+    setLoading(false);
+    // Clear any existing token on page load
+    logout();
   }, []);
 
   const handleLogout = () => {

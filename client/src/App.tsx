@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createRecipe, updateRecipe, type Recipe } from "./services/api";
+import { createRecipe, updateRecipe, fetchRecipe, type Recipe } from "./services/api";
 import { useAuth } from "./hooks/useAuth";
 import { useRecipes } from "./hooks/useRecipes";
 import { TopBar, LoginCard, LandingPage, HomeGrid, GuestGrid, RecipeDetail, RecipeForm, ReviewPage, QrManager } from "./components";
@@ -36,8 +36,17 @@ export default function App() {
     }
   }, [recipes]);
 
-  // Extract token from URL query parameters
+  // Extract token from URL query parameters (including hash fragments)
   const getUrlToken = () => {
+    // First try to get from hash fragment (e.g., /#/review/9?token=...)
+    const hash = window.location.hash;
+    if (hash.includes('?')) {
+      const hashParams = new URLSearchParams(hash.split('?')[1]);
+      const token = hashParams.get('token');
+      if (token) return token;
+    }
+    
+    // Fallback to regular query parameters
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('token');
   };
@@ -49,17 +58,34 @@ export default function App() {
   }, [recipesLoading, recipesError]);
 
   // --- Navigation helpers ---
-  const goLanding = () => setPage({ name: "landing" });
+  const goLanding = () => {
+    // Logout when going back to landing page
+    handleLogout();
+    setPage({ name: "landing" });
+  };
   const goHome = () => setPage({ name: "home" });
-  const goGuest = () => setPage({ name: "guest" });
+  const goGuest = () => {
+    // Logout when switching to guest mode
+    handleLogout();
+    setPage({ name: "guest" });
+  };
   const goCreate = () => setPage({ name: "create" });
   const goQrManager = () => setPage({ name: "qr-manager" });
   
-  const goDetail = (id: number) => {
+  const goDetail = async (id: number) => {
     const recipe = recipes.find((r) => r.id === id);
     if (recipe) {
-      setCurrentRecipe(recipe);
-      setPage({ name: "detail", id });
+      try {
+        setLoading(true);
+        // Fetch the full recipe details with ingredients and reviews
+        const fullRecipe = await fetchRecipe(recipe.slug);
+        setCurrentRecipe(fullRecipe);
+        setPage({ name: "detail", id });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load recipe details');
+      } finally {
+        setLoading(false);
+      }
     }
   };
   
@@ -84,10 +110,6 @@ export default function App() {
     }
   };
 
-  const handleLogoutWithRedirect = () => {
-    handleLogout();
-    setPage({ name: "landing" });
-  };
 
   // --- Recipe handlers ---
   const handleCreateRecipe = async (data: RecipeFormData) => {
@@ -129,8 +151,6 @@ export default function App() {
       <TopBar 
         onLogoClick={goLanding} 
         isAdmin={isAdmin} 
-        onLogout={handleLogoutWithRedirect} 
-        onLogin={() => setPage({ name: "login" })} 
       />
       
       <main className="mx-auto max-w-6xl px-4 py-6">

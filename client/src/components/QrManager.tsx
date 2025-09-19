@@ -24,6 +24,7 @@ interface QrManagerProps {
 export function QrManager({ recipes, onBack }: QrManagerProps) {
   const [selectedRecipeId, setSelectedRecipeId] = useState<number | null>(null);
   const [qrTokens, setQrTokens] = useState<QrToken[]>([]);
+  const [qrCounts, setQrCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,8 +51,33 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
     }
   };
 
+  // Fetch QR token counts per recipe
+  const fetchQrCounts = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('http://localhost:4000/qr/counts', {
+        headers,
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch QR counts');
+      }
+      const counts = await response.json();
+      setQrCounts(counts || {});
+    } catch (err) {
+      console.error('Failed to fetch QR counts:', err);
+      // Don't set error state for counts since it's not critical
+    }
+  };
+
   useEffect(() => {
     fetchQrTokens();
+    fetchQrCounts();
   }, []);
 
   const generateQrToken = async () => {
@@ -83,10 +109,42 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
       const newToken = await response.json();
       setQrTokens(prev => [newToken, ...prev]);
       setSelectedRecipeId(null);
+      // Refresh counts after creating a new QR token
+      fetchQrCounts();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate QR token');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteQrToken = async (tokenId: string) => {
+    if (!confirm('Are you sure you want to delete this QR code? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`http://localhost:4000/qr/${tokenId}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete QR token');
+      }
+
+      // Remove the token from the list and refresh counts
+      setQrTokens(prev => prev.filter(t => t.id !== tokenId));
+      fetchQrCounts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete QR token');
     }
   };
 
@@ -120,11 +178,14 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
               className="w-full rounded-xl border border-gray-600 bg-gray-700 px-4 py-3 text-white focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/20"
             >
               <option value="">Choose a recipe...</option>
-              {recipes.map((recipe) => (
-                <option key={recipe.id} value={recipe.id}>
-                  {recipe.title}
-                </option>
-              ))}
+              {recipes.map((recipe) => {
+                const qrCount = qrCounts[recipe.id] || 0;
+                return (
+                  <option key={recipe.id} value={recipe.id}>
+                    {recipe.title} {qrCount > 0 && `(${qrCount} QR code${qrCount > 1 ? 's' : ''})`}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
@@ -185,6 +246,12 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
                     >
                       Test
                     </a>
+                    <button
+                      onClick={() => deleteQrToken(token.id)}
+                      className="rounded-lg border border-red-600 bg-red-700/20 px-3 py-1 text-sm text-red-400 hover:bg-red-700/30"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               </div>

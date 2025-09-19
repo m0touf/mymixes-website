@@ -21,7 +21,23 @@ export async function listRecipes(query?: string, page = 1, size = 12) {
       skip: (page - 1) * size,
       take: size,
       orderBy: { createdAt: "desc" },
-      include: { ingredients: { include: { type: true } }, reviews: true }
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        imageUrl: true,
+        description: true,
+        method: true,
+        avgRating: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            reviews: true,
+            ingredients: true,
+          }
+        }
+      }
     }),
     prisma.recipe.count({ where })
   ]);
@@ -32,6 +48,23 @@ export async function getRecipeBySlug(slug: string) {
   return prisma.recipe.findUnique({
     where: { slug },
     include: { ingredients: { include: { type: true } }, reviews: { orderBy: { createdAt: "desc" }, take: 25 } },
+  });
+}
+
+export async function getRecipeById(id: number) {
+  return prisma.recipe.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      imageUrl: true,
+      description: true,
+      method: true,
+      avgRating: true,
+      createdAt: true,
+      updatedAt: true,
+    }
   });
 }
 
