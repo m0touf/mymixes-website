@@ -38,7 +38,7 @@ export function HomeGrid({
               className="inline-flex items-center gap-2 rounded-2xl bg-pink-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pink-700"
             >
               <span className="text-lg">+</span>
-              New Recipe
+              Add
             </button>
             {onQrManager && (
               <button
@@ -46,7 +46,7 @@ export function HomeGrid({
                 className="inline-flex items-center gap-2 rounded-2xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 shadow-sm hover:bg-gray-600"
               >
                 <span className="text-lg">📱</span>
-                QR Codes
+                QR
               </button>
             )}
           </div>

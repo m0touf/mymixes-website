@@ -100,10 +100,10 @@ export function RecipeDetail({
                           <span
                             key={star}
                             className={`text-sm ${
-                              star <= review.rating ? 'text-yellow-400' : 'text-gray-600'
+                              star <= review.rating ? 'text-pink-500' : 'text-gray-600'
                             }`}
                           >
-                            ⭐
+                            <span className={star <= review.rating ? 'text-pink-500' : 'text-gray-600'}>★</span>
                           </span>
                         ))}
                       </div>

@@ -170,16 +170,16 @@ export function ReviewPage({ recipe, token, onBack }: ReviewPageProps) {
                       className={`
                         text-3xl transition-all duration-200 transform hover:scale-110 
                         ${isActive 
-                          ? 'text-yellow-400 drop-shadow-lg' 
+                          ? 'text-pink-500 drop-shadow-lg' 
                           : 'text-gray-600 hover:text-gray-400'
                         }
                         ${isSelected ? 'animate-pulse' : ''}
-                        hover:drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]
-                        focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50 rounded
+                        hover:drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]
+                        focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50 rounded
                       `}
                       title={`${star} star${star > 1 ? 's' : ''}`}
                     >
-                      ⭐
+                      ★
                     </button>
                   );
                 })}
@@ -187,7 +187,7 @@ export function ReviewPage({ recipe, token, onBack }: ReviewPageProps) {
               <div className="mt-2 text-sm">
                 <p className="text-gray-400">
                   {hoveredStar ? (
-                    <span className="text-yellow-400 font-medium">
+                    <span className="text-pink-500 font-medium">
                       {hoveredStar} star{hoveredStar > 1 ? 's' : ''} - {getRatingText(hoveredStar)}
                     </span>
                   ) : (
