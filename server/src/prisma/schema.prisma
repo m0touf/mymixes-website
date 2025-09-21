@@ -14,17 +14,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int   @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  imageUrl  String?
-  role      Role     @default(USER) // OWNER (you) or USER
-  reviews   Review[]
-  recipes   Recipe[] // if you later allow community authorship
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
 
 model Recipe {
   id          Int      @id @default(autoincrement())
@@ -34,8 +23,6 @@ model Recipe {
   description String?
   ingredients Ingredient[] // normalized table for simple querying
   method      String
-  authorId    Int?
-  author      User?        @relation(fields: [authorId], references: [id])
   reviews     Review[]
   qrTokens    QrToken[]
   avgRating   Float        @default(0)
@@ -73,8 +60,6 @@ model Review {
   name      String?  // Name of the reviewer (for anonymous reviews)
   recipeId  Int
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  userId    Int?
-  user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
   @@index([recipeId])
@@ -96,8 +81,4 @@ model QrToken {
   @@index([used])
 }
 
-enum Role {
-  OWNER
-  USER
-}
 

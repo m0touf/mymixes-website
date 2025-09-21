@@ -7,7 +7,6 @@ export function HomeGrid({
   search,
   setSearch,
   onCreate,
-  onQrManager,
   onOpen,
   loading,
   error,
@@ -31,26 +30,6 @@ export function HomeGrid({
             className="w-full rounded-2xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
         </div>
-        {isAdmin && (
-          <div className="flex gap-2">
-            <button
-              onClick={onCreate}
-              className="inline-flex items-center gap-2 rounded-2xl bg-pink-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-pink-700"
-            >
-              <span className="text-lg">+</span>
-              Add
-            </button>
-            {onQrManager && (
-              <button
-                onClick={onQrManager}
-                className="inline-flex items-center gap-2 rounded-2xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm font-medium text-gray-300 shadow-sm hover:bg-gray-600"
-              >
-                <span className="text-lg">📱</span>
-                QR
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
       {error ? (
@@ -74,7 +53,7 @@ export function HomeGrid({
           {recipes.map((r) => (
             <article
               key={r.id}
-              className="group overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm transition hover:shadow-md hover:border-gray-600"
+              className="group overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm transition hover:shadow-md hover:border-pink-500 hover:bg-pink-500/5"
             >
               <button onClick={() => onOpen(r.id)} className="block w-full text-left">
                 <div className="aspect-video w-full overflow-hidden bg-gray-700">
@@ -102,6 +81,33 @@ export function HomeGrid({
               </button>
             </article>
           ))}
+          
+          {/* Large Add Button */}
+          {isAdmin && (
+            <button
+              onClick={onCreate}
+              className="group overflow-hidden rounded-2xl border-2 border-dashed border-gray-600 bg-gray-800/50 transition hover:border-pink-500 hover:bg-pink-500/10"
+            >
+              <div className="aspect-video w-full overflow-hidden bg-gray-700/50 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full border-2 border-gray-400 bg-gray-700 text-gray-400 transition group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-pink-500">
+                    <span className="text-3xl font-light">+</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-gray-300 group-hover:text-pink-400">
+                  Add Recipe
+                </h3>
+                <p className="mt-1 text-sm text-gray-400 group-hover:text-pink-300">
+                  Create a new cocktail recipe
+                </p>
+                <div className="mt-3 text-xs text-gray-500 group-hover:text-pink-300">
+                  Click to start
+                </div>
+              </div>
+            </button>
+          )}
         </div>
       )}
     </div>

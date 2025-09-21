@@ -12,6 +12,6 @@ export async function postRecipeReview(req: Request, res: Response) {
   const recipeId = Number(req.params.id);
   const parsed = CreateReviewInput.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
-  const review = await createReview(recipeId, req.user?.id ?? null, parsed.data);
+  const review = await createReview(recipeId, parsed.data);
   res.status(201).json(review);
 }

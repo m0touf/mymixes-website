@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type { AuthenticatedRequest } from "../middlewares/auth";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -52,7 +53,7 @@ export async function login(req: Request, res: Response) {
   }
 }
 
-export async function verifyToken(req: Request, res: Response) {
+export async function verifyToken(req: AuthenticatedRequest, res: Response) {
   try {
     // This endpoint is protected by the auth middleware
     // If we reach here, the token is valid

@@ -68,13 +68,12 @@ export async function getRecipeById(id: number) {
   });
 }
 
-export async function createRecipe(data: CreateRecipeDTO, authorId?: number) {
+export async function createRecipe(data: CreateRecipeDTO) {
   const { ingredients, ...rest } = data;
 
   return prisma.recipe.create({
     data: {
       ...rest,
-      authorId,
       ingredients: {
         create: ingredients.map((ing) => {
           // If client sent typeId, use that; otherwise use name with connectOrCreate
@@ -101,14 +100,13 @@ export async function createRecipe(data: CreateRecipeDTO, authorId?: number) {
   });
 }
 
-export async function updateRecipe(id: number, data: CreateRecipeDTO, authorId?: number) {
+export async function updateRecipe(id: number, data: CreateRecipeDTO) {
   const { ingredients, ...rest } = data;
 
   return prisma.recipe.update({
     where: { id },
     data: {
       ...rest,
-      authorId,
       ingredients: {
         deleteMany: {}, // Remove all existing ingredients
         create: ingredients.map((ing) => {

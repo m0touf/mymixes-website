@@ -192,7 +192,21 @@ export default function App() {
         prev.map((r) => (r.id === page.id ? updatedRecipe : r))
       );
       setCurrentRecipe(updatedRecipe);
-      await goDetail(page.id);
+      // Navigate to detail page using the updated recipe's slug
+      setPage({ name: "detail", id: updatedRecipe.id });
+      setIsTransitioning(true);
+      try {
+        setLoading(true);
+        // Fetch the full recipe details with ingredients and reviews using the updated slug
+        const fullRecipe = await fetchRecipe(updatedRecipe.slug);
+        setCurrentRecipe(fullRecipe);
+      } catch (err) {
+        console.error('Error fetching updated recipe:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch updated recipe');
+      } finally {
+        setLoading(false);
+        setIsTransitioning(false);
+      }
     } catch (err) {
       console.error('Error updating recipe:', err);
       setError(err instanceof Error ? err.message : 'Failed to update recipe');
@@ -220,6 +234,8 @@ export default function App() {
       <TopBar 
         onLogoClick={goLanding}
         isAdmin={isAdmin}
+        onQrManager={goQrManager}
+        currentPage={page}
       />
       
       <main className="mx-auto max-w-6xl px-4 py-6">
@@ -242,7 +258,6 @@ export default function App() {
             search={search}
             setSearch={setSearch}
             onCreate={goCreate}
-            onQrManager={goQrManager}
             onOpen={goDetail}
             loading={loading}
             error={error}

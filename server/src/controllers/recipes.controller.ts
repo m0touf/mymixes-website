@@ -19,7 +19,7 @@ export async function getRecipe(req: Request, res: Response) {
 export async function postRecipe(req: Request, res: Response) {
     const parsed = CreateRecipeInput.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
-    const recipe = await createRecipe(parsed.data, req.user?.id);
+    const recipe = await createRecipe(parsed.data);
     res.status(201).json(recipe);
 }
 
@@ -27,7 +27,7 @@ export async function putRecipe(req: Request, res: Response) {
     const id = Number(req.params.id);
     const parsed = CreateRecipeInput.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
-    const recipe = await updateRecipe(id, parsed.data, req.user?.id);
+    const recipe = await updateRecipe(id, parsed.data);
     res.json(recipe);
 }
 

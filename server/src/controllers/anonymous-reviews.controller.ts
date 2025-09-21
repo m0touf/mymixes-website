@@ -21,8 +21,8 @@ export async function postAnonymousReview(req: Request, res: Response) {
   }
 
   try {
-    // Create review with null userId (anonymous)
-    const review = await createReview(recipeId, null, {
+    // Create anonymous review
+    const review = await createReview(recipeId, {
       rating: parsed.data.rating,
       comment: parsed.data.comment,
       name: parsed.data.name

@@ -31,6 +31,8 @@ export type RecipeFormData = {
 export interface TopBarProps {
   onLogoClick: () => void;
   isAdmin: boolean;
+  onQrManager?: () => void;
+  currentPage?: Page;
 }
 
 export interface LoginCardProps {
@@ -45,7 +47,6 @@ export interface HomeGridProps {
   search: string;
   setSearch: (s: string) => void;
   onCreate: () => void;
-  onQrManager?: () => void;
   onOpen: (id: number) => void;
   loading: boolean;
   error: string | null;

@@ -5,11 +5,10 @@ export async function listReviews(recipeId: number) {
     return prisma.review.findMany({ where: { recipeId }, orderBy: { createdAt: "desc" } });
 }
 
-export async function createReview(recipeId: number, userId: number | null, data: CreateReviewDTO & { name?: string }) {
+export async function createReview(recipeId: number, data: CreateReviewDTO & { name?: string }) {
     const review = await prisma.review.create({
         data: { 
             recipeId, 
-            userId: userId ?? undefined, 
             rating: data.rating, 
             comment: data.comment,
             name: data.name ?? undefined
