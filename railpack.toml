@@ -1,0 +1,7 @@
+[build]
+language = "node"
+build_command = "cd server && npm ci && npm run build"
+start_command = "cd server && npm start"
+
+[deploy]
+healthcheck_path = "/health"
