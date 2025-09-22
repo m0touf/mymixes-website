@@ -26,14 +26,32 @@ app.get("/", (_req, res) => {
 });
 
 // Health check endpoint
-app.get("/health", (_req, res) => {
+app.get("/health", async (_req, res) => {
   console.log('Health check requested');
-  res.status(200).json({ 
-    ok: true, 
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+  try {
+    // Test database connection
+    const { getPrismaClient } = await import("./prisma/client");
+    const prisma = getPrismaClient();
+    await prisma.$queryRaw`SELECT 1`;
+    
+    res.status(200).json({ 
+      ok: true, 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'connected'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ 
+      ok: false, 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'disconnected',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // Mount all feature routers
