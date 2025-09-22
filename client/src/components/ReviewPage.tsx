@@ -1,6 +1,17 @@
 import { useState } from "react";
 import type { Recipe } from "../services/api";
 
+// Dynamic API configuration (same as main API service)
+const getApiBase = () => {
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  } else {
+    return import.meta.env.VITE_API_URL || 'https://mymixes-website-production-5e7e.up.railway.app';
+  }
+};
+
+const API_BASE = getApiBase();
+
 interface ReviewPageProps {
   recipe: Recipe;
   token?: string;
@@ -39,7 +50,7 @@ export function ReviewPage({ recipe, token, onBack }: ReviewPageProps) {
     setError(null);
 
     try {
-      const url = new URL(`http://localhost:4000/recipes/${recipe.id}/anonymous-reviews`);
+      const url = new URL(`${API_BASE}/recipes/${recipe.id}/anonymous-reviews`);
       if (token) {
         url.searchParams.append('token', token);
       }
