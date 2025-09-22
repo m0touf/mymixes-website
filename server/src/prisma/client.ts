@@ -1,15 +1,15 @@
 // src/prisma/client.ts
 import { PrismaClient } from "@prisma/client";
 
-let prisma: PrismaClient;
+let prismaInstance: PrismaClient;
 
 export function getPrismaClient(): PrismaClient {
-  if (!prisma) {
-    prisma = new PrismaClient({
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient({
       log: ['error', 'warn'],
     });
   }
-  return prisma;
+  return prismaInstance;
 }
 
 // For backward compatibility
