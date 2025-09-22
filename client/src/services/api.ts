@@ -1,9 +1,23 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// Dynamic API configuration
+const getApiBase = () => {
+  // Check if we're in development mode
+  if (import.meta.env.DEV) {
+    // Development: use localhost or custom URL
+    return import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  } else {
+    // Production: use environment variable or fallback
+    return import.meta.env.VITE_API_URL || 'https://mymixes-website-production-5e7e.up.railway.app';
+  }
+};
 
-// Debug logging
-console.log('🔧 API_BASE:', API_BASE);
-console.log('🔧 VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('🔧 All env vars:', import.meta.env);
+const API_BASE = getApiBase();
+
+// Debug logging (only in development)
+if (import.meta.env.DEV) {
+  console.log('🔧 API_BASE:', API_BASE);
+  console.log('🔧 VITE_API_URL:', import.meta.env.VITE_API_URL);
+  console.log('🔧 Environment:', import.meta.env.MODE);
+}
 
 // Auth token management
 const getAuthToken = () => localStorage.getItem('authToken');

@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
 import type { Recipe } from "../services/api";
 
-// Use the same API_BASE as the main API service
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+// Dynamic API configuration (same as main API service)
+const getApiBase = () => {
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  } else {
+    return import.meta.env.VITE_API_URL || 'https://mymixes-website-production-5e7e.up.railway.app';
+  }
+};
+
+const API_BASE = getApiBase();
 
 interface QrToken {
   id: string;
