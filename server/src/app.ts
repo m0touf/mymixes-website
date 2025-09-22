@@ -9,7 +9,14 @@ import { errorHandler } from "./middlewares/errorHandler";
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ 
+  origin: [
+    "http://localhost:5173", // Vite dev server
+    "https://*.vercel.app", // Vercel preview deployments
+    process.env.FRONTEND_URL // Production frontend URL
+  ].filter(Boolean), 
+  credentials: true 
+}));
 app.use(express.json());
 app.use(cookieParser());
 
