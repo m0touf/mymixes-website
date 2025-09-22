@@ -10,6 +10,8 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ API listening on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 Health check available at: http://0.0.0.0:${PORT}/health`);
+  console.log(`📊 Process ID: ${process.pid}`);
+  console.log(`🔧 Node version: ${process.version}`);
 });
 
 server.on('error', (error) => {
