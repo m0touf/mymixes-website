@@ -28,6 +28,20 @@ app.get("/", (_req, res) => {
 // Health check endpoint
 app.get("/health", async (_req, res) => {
   console.log('Health check requested');
+  
+  // Check if DATABASE_URL is set
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL environment variable not set');
+    return res.status(503).json({ 
+      ok: false, 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'disconnected',
+      error: 'DATABASE_URL environment variable not set'
+    });
+  }
+  
   try {
     // Test database connection
     const { getPrismaClient } = await import("./prisma/client");
