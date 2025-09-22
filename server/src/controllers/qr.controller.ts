@@ -17,7 +17,7 @@ export async function generateQrToken(req: Request, res: Response) {
     const qrData = await generateSecureQrToken(parsed.data.recipeId);
     
     // Generate the QR URL
-    const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const baseUrl = process.env.FRONTEND_URL || "https://mymixes.vercel.app";
     const qrUrl = `${baseUrl}/#/review/${qrData.recipeId}?token=${qrData.token}`;
     
     res.json({
@@ -41,7 +41,7 @@ export async function getQrTokens(req: Request, res: Response) {
     const tokens = await getActiveQrTokens(recipeId);
     
     // Generate QR URLs for each token
-    const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const baseUrl = process.env.FRONTEND_URL || "https://mymixes.vercel.app";
     const tokensWithUrls = tokens.map((token: any) => ({
       ...token,
       qrUrl: `${baseUrl}/#/review/${token.recipeId}?token=${token.token}`,

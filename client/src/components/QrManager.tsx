@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import type { Recipe } from "../services/api";
 
+// Use the same API_BASE as the main API service
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
 interface QrToken {
   id: string;
   token: string;
@@ -37,7 +40,7 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:4000/qr', {
+      const response = await fetch(`${API_BASE}/qr`, {
         headers,
       });
       if (!response.ok) {
@@ -60,7 +63,7 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:4000/qr/counts', {
+      const response = await fetch(`${API_BASE}/qr/counts`, {
         headers,
       });
       if (!response.ok) {
@@ -95,7 +98,7 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('http://localhost:4000/qr/generate', {
+      const response = await fetch(`${API_BASE}/qr/generate`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ recipeId: selectedRecipeId }),
@@ -130,7 +133,7 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`http://localhost:4000/qr/${tokenId}`, {
+      const response = await fetch(`${API_BASE}/qr/${tokenId}`, {
         method: 'DELETE',
         headers,
       });
