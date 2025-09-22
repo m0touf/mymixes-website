@@ -1,5 +1,10 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
+// Debug logging
+console.log('🔧 API_BASE:', API_BASE);
+console.log('🔧 VITE_API_URL:', import.meta.env.VITE_API_URL);
+console.log('🔧 All env vars:', import.meta.env);
+
 // Auth token management
 const getAuthToken = () => localStorage.getItem('authToken');
 const setAuthToken = (token: string) => localStorage.setItem('authToken', token);
