@@ -25,15 +25,11 @@ cd server
 echo "📦 Installing dependencies..."
 npm ci
 
-# Generate Prisma client
-echo "🔧 Generating Prisma client..."
-npx prisma generate
-
 # Run database migrations
 echo "🗄️ Running database migrations..."
-npx prisma migrate deploy
+npx prisma migrate deploy --schema=src/prisma/schema.prisma
 
-# Build the application
+# Build the application (includes prisma generate)
 echo "🏗️ Building application..."
 npm run build
 
