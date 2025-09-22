@@ -107,7 +107,7 @@ export async function getQrTokenCounts(): Promise<Record<number, number>> {
   });
 
   const result: Record<number, number> = {};
-  counts.forEach(count => {
+  counts.forEach((count: any) => {
     result[count.recipeId] = count._count.id;
   });
 

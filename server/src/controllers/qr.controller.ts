@@ -42,7 +42,7 @@ export async function getQrTokens(req: Request, res: Response) {
     
     // Generate QR URLs for each token
     const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const tokensWithUrls = tokens.map(token => ({
+    const tokensWithUrls = tokens.map((token: any) => ({
       ...token,
       qrUrl: `${baseUrl}/#/review/${token.recipeId}?token=${token.token}`,
     }));

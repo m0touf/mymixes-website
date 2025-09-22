@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorHandler = errorHandler;
-const client_1 = require("@prisma/client");
+const library_1 = require("@prisma/client/runtime/library");
 function errorHandler(err, _req, res, _next) {
     // Log everything to your console for debugging
     console.error("[ERROR]", err);
     // Prisma known errors → return helpful status codes
-    if (err instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+    if (err instanceof library_1.PrismaClientKnownRequestError) {
         // Unique constraint (e.g., slug already exists OR IngredientType.name duplicate)
         if (err.code === "P2002") {
             return res.status(409).json({ error: "Unique constraint failed", meta: err.meta });
@@ -21,7 +21,7 @@ function errorHandler(err, _req, res, _next) {
         }
     }
     // Prisma validation (wrong shape sent to Prisma)
-    if (err instanceof client_1.Prisma.PrismaClientValidationError) {
+    if (err instanceof library_1.PrismaClientValidationError) {
         return res.status(400).json({ error: "Invalid data for Prisma query" });
     }
     // Zod validation (from your controllers)

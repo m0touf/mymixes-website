@@ -41,7 +41,7 @@ async function getQrTokens(req, res) {
         const tokens = await (0, qr_service_1.getActiveQrTokens)(recipeId);
         // Generate QR URLs for each token
         const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-        const tokensWithUrls = tokens.map(token => ({
+        const tokensWithUrls = tokens.map((token) => ({
             ...token,
             qrUrl: `${baseUrl}/#/review/${token.recipeId}?token=${token.token}`,
         }));

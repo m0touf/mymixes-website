@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import type { CreateRecipeDTO } from "../validators/recipes.schema";
 
 export async function listRecipes(query?: string, page = 1, size = 12) {
-  const where: Prisma.RecipeWhereInput | undefined = query
+  const where: any = query
     ? {
       OR: [
         {

@@ -1,13 +1,13 @@
 // server/src/middlewares/errorHandler.ts
 import type { Request, Response, NextFunction } from "express";
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from "@prisma/client/runtime/library";
 
 export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
   // Log everything to your console for debugging
   console.error("[ERROR]", err);
 
   // Prisma known errors → return helpful status codes
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err instanceof PrismaClientKnownRequestError) {
     // Unique constraint (e.g., slug already exists OR IngredientType.name duplicate)
     if (err.code === "P2002") {
       return res.status(409).json({ error: "Unique constraint failed", meta: err.meta });
@@ -23,7 +23,7 @@ export function errorHandler(err: any, _req: Request, res: Response, _next: Next
   }
 
   // Prisma validation (wrong shape sent to Prisma)
-  if (err instanceof Prisma.PrismaClientValidationError) {
+  if (err instanceof PrismaClientValidationError) {
     return res.status(400).json({ error: "Invalid data for Prisma query" });
   }
 

@@ -95,7 +95,7 @@ async function getQrTokenCounts() {
         },
     });
     const result = {};
-    counts.forEach(count => {
+    counts.forEach((count) => {
         result[count.recipeId] = count._count.id;
     });
     return result;
