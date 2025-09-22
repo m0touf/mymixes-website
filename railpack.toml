@@ -1,5 +1,6 @@
 [build]
 language = "node"
+version = "20"
 build_command = "cd server && npm ci && npm run build"
 start_command = "cd server && npm start"
 

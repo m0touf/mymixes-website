@@ -1,0 +1,14 @@
+{
+  "name": "mymixes-website",
+  "version": "1.0.0",
+  "description": "MyMixes website with React frontend and Node.js backend",
+  "scripts": {
+    "build": "cd server && npm ci && npm run build",
+    "start": "cd server && npm start",
+    "dev": "cd server && npm run dev"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
