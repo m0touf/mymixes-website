@@ -27,7 +27,6 @@ app.get("/", (_req, res) => {
 
 // Health check endpoint
 app.get("/health", async (_req, res) => {
-  console.log('Health check requested');
   
   // Check if DATABASE_URL is set
   if (!process.env.DATABASE_URL) {

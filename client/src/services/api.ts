@@ -15,8 +15,6 @@ const API_BASE = getApiBase();
 // Debug logging (only in development)
 if (import.meta.env.DEV) {
   console.log('🔧 API_BASE:', API_BASE);
-  console.log('🔧 VITE_API_URL:', import.meta.env.VITE_API_URL);
-  console.log('🔧 Environment:', import.meta.env.MODE);
 }
 
 // Auth token management

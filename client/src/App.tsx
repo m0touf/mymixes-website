@@ -58,7 +58,6 @@ export default function App() {
     setError(recipesError);
   }, [recipesLoading, recipesError]);
 
-  // --- Navigation helpers ---
   const goLanding = () => {
     // Logout when going back to landing page
     handleLogout();
@@ -185,9 +184,7 @@ export default function App() {
     
     try {
       setLoading(true);
-      console.log('Updating recipe with data:', data);
       const updatedRecipe = await updateRecipe(page.id, data);
-      console.log('Updated recipe received:', updatedRecipe);
       setRecipes((prev) =>
         prev.map((r) => (r.id === page.id ? updatedRecipe : r))
       );
