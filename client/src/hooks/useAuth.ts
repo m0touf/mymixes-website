@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { verifyToken, logout, isAuthenticated } from "../services/api";
+import { verifyToken, logout } from "../services/api";
 
 export const useAuth = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -19,11 +19,6 @@ export const useAuth = () => {
     setLoading(false);
   };
 
-  // Force logout on page refresh/load
-  const forceLogout = () => {
-    logout();
-    setIsAdmin(false);
-  };
 
   useEffect(() => {
     // Always start as not admin on page load/refresh
