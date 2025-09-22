@@ -54,7 +54,7 @@ export function GuestGrid({
               className="group overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm transition hover:shadow-md hover:border-gray-600"
             >
               <button onClick={() => onOpen(r.id)} className="block w-full text-left">
-                <div className="aspect-video w-full overflow-hidden bg-gray-700">
+                <div className="aspect-square w-full overflow-hidden bg-gray-700">
                   {r.imageUrl ? (
                     <img
                       src={r.imageUrl}

@@ -56,7 +56,7 @@ export function HomeGrid({
               className="group overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm transition hover:shadow-md hover:border-pink-500 hover:bg-pink-500/5"
             >
               <button onClick={() => onOpen(r.id)} className="block w-full text-left">
-                <div className="aspect-video w-full overflow-hidden bg-gray-700">
+                <div className="aspect-square w-full overflow-hidden bg-gray-700">
                   {r.imageUrl ? (
                     <img
                       src={r.imageUrl}
@@ -88,7 +88,7 @@ export function HomeGrid({
               onClick={onCreate}
               className="group overflow-hidden rounded-2xl border-2 border-dashed border-gray-600 bg-gray-800/50 transition hover:border-pink-500 hover:bg-pink-500/10"
             >
-              <div className="aspect-video w-full overflow-hidden bg-gray-700/50 flex items-center justify-center">
+              <div className="aspect-square w-full overflow-hidden bg-gray-700/50 flex items-center justify-center">
                 <div className="text-center">
                   <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full border-2 border-gray-400 bg-gray-700 text-gray-400 transition group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-pink-500">
                     <span className="text-3xl font-light">+</span>
