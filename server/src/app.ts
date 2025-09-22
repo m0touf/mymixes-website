@@ -13,8 +13,8 @@ app.use(cors({
   origin: [
     "http://localhost:5173", // Vite dev server
     "https://*.vercel.app", // Vercel preview deployments
-    process.env.FRONTEND_URL // Production frontend URL
-  ].filter(Boolean), 
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+  ], 
   credentials: true 
 }));
 app.use(express.json());
