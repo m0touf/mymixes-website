@@ -20,8 +20,32 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Health
-app.get("/health", (_req, res) => res.json({ ok: true }));
+// Health check endpoint
+app.get("/health", async (_req, res) => {
+  try {
+    // Test database connection
+    const { prisma } = await import("./prisma/client");
+    await prisma.$queryRaw`SELECT 1`;
+    
+    res.status(200).json({ 
+      ok: true, 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'connected'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ 
+      ok: false, 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+      database: 'disconnected',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
 
 // Mount all feature routers
 app.use("/", api);
