@@ -1,0 +1,39 @@
+
+services:
+  # PostgreSQL Database (using external Neon database)
+  # Note: Since you're using Neon, we don't need a local PostgreSQL container
+  # The postgres service is commented out - your app will connect to Neon directly
+
+  # Backend API Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: mymixes-server
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./server/src/prisma:/app/prisma
+    command: >
+      sh -c "
+        npx prisma migrate deploy &&
+        npm start
+      "
+
+  # Frontend React App
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: mymixes-client
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    environment:
+      VITE_API_URL: http://localhost:4000
