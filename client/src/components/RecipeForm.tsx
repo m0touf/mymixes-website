@@ -58,27 +58,51 @@ export function RecipeForm({
         throw new Error('Please upload a JPG, PNG, GIF, or WebP image');
       }
       
-      // Validate file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      // Validate file size (max 2MB for base64)
+      const maxSize = 2 * 1024 * 1024; // 2MB
       if (file.size > maxSize) {
-        throw new Error('Image must be smaller than 10MB');
+        throw new Error('Image must be smaller than 2MB. For larger images, please use an image URL instead.');
       }
       
-      // Convert to base64 for now (we can implement proper upload later)
-      const reader = new FileReader();
+      // Compress and convert to base64 for now (we can implement proper upload later)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
       
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        setImageUrl(base64String);
+      img.onload = () => {
+        // Calculate new dimensions (max 800px width/height)
+        const maxSize = 800;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        setImageUrl(compressedDataUrl);
         setIsUploading(false);
       };
       
-      reader.onerror = () => {
-        setErrors(prev => ({ ...prev, imageUrl: "Failed to read image file" }));
+      img.onerror = () => {
+        setErrors(prev => ({ ...prev, imageUrl: "Failed to process image file" }));
         setIsUploading(false);
       };
       
-      reader.readAsDataURL(file);
+      img.src = URL.createObjectURL(file);
       
     } catch (error) {
       setErrors(prev => ({ 
