@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { RecipeFormProps, Ingredient } from "../types";
 import { uid, generateSlug, formatIngredients } from "../utils/helpers";
+import { ImageCropper } from "./ImageCropper";
 
 export function RecipeForm({
   mode,
@@ -25,6 +26,8 @@ export function RecipeForm({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>("");
 
   // Update ingredients when initial prop changes
   useEffect(() => {
@@ -58,51 +61,11 @@ export function RecipeForm({
         throw new Error('Please upload a JPG, PNG, GIF, or WebP image');
       }
       
-      // Validate file size (max 2MB for base64)
-      const maxSize = 2 * 1024 * 1024; // 2MB
-      if (file.size > maxSize) {
-        throw new Error('Image must be smaller than 2MB. For larger images, please use an image URL instead.');
-      }
-      
-      // Compress and convert to base64 for now (we can implement proper upload later)
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        // Calculate new dimensions (max 800px width/height)
-        const maxSize = 800;
-        let { width, height } = img;
-        
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw and compress
-        ctx?.drawImage(img, 0, 0, width, height);
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        
-        setImageUrl(compressedDataUrl);
-        setIsUploading(false);
-      };
-      
-      img.onerror = () => {
-        setErrors(prev => ({ ...prev, imageUrl: "Failed to process image file" }));
-        setIsUploading(false);
-      };
-      
-      img.src = URL.createObjectURL(file);
+      // Create object URL for cropping
+      const imageUrl = URL.createObjectURL(file);
+      setImageToCrop(imageUrl);
+      setShowCropper(true);
+      setIsUploading(false);
       
     } catch (error) {
       setErrors(prev => ({ 
@@ -110,6 +73,36 @@ export function RecipeForm({
         imageUrl: error instanceof Error ? error.message : "Failed to upload image. Please try again or use a URL instead." 
       }));
       setIsUploading(false);
+    }
+  };
+
+  const handleCropComplete = (croppedImageUrl: string) => {
+    // Convert blob URL to base64 for storage
+    fetch(croppedImageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImageUrl(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
+      });
+    
+    setShowCropper(false);
+    setImageToCrop("");
+    
+    // Clean up the blob URL
+    URL.revokeObjectURL(croppedImageUrl);
+  };
+
+  const handleCropperClose = () => {
+    setShowCropper(false);
+    setImageToCrop("");
+    setIsUploading(false);
+    
+    // Clean up the blob URL
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
     }
   };
 
@@ -251,7 +244,7 @@ export function RecipeForm({
                     : 'border-gray-600 bg-gray-700 text-gray-400 hover:border-pink-500 hover:text-pink-400'
                 }`}
               >
-                {isUploading ? 'Processing...' : '📷 Upload Image (JPG, PNG, GIF, WebP)'}
+                {isUploading ? 'Processing...' : '📷 Upload & Crop Image (Any Size)'}
               </label>
               
               <input
@@ -475,6 +468,17 @@ export function RecipeForm({
           </div>
         </div>
       </div>
+
+      {/* Image Cropper Modal */}
+      {showCropper && (
+        <ImageCropper
+          src={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onClose={handleCropperClose}
+          recipeTitle={title}
+          recipeDescription={description}
+        />
+      )}
     </div>
   );
 }
