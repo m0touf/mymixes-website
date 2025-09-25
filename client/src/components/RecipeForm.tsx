@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import type { RecipeFormProps, Ingredient } from "../types";
 import { uid, generateSlug, formatIngredients } from "../utils/helpers";
-import { ImageEditor } from "./ImageEditor";
 
 export function RecipeForm({
   mode,
@@ -26,8 +25,6 @@ export function RecipeForm({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
-  const [showImageEditor, setShowImageEditor] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Update ingredients when initial prop changes
   useEffect(() => {
@@ -50,50 +47,62 @@ export function RecipeForm({
   const updateRow = (id: string, patch: Partial<Ingredient>) =>
     setIngredients((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
 
-  const handleFileSelect = (file: File) => {
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      setErrors(prev => ({ ...prev, imageUrl: 'Please upload a JPG, PNG, GIF, or WebP image' }));
-      return;
-    }
-    
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      setErrors(prev => ({ ...prev, imageUrl: 'Image must be smaller than 10MB' }));
-      return;
-    }
-    
-    setSelectedFile(file);
-    setShowImageEditor(true);
-    setErrors(prev => ({ ...prev, imageUrl: "" }));
-  };
-
   const handleImageUpload = async (file: File) => {
     setIsUploading(true);
+    setErrors(prev => ({ ...prev, imageUrl: "" }));
     
     try {
-      // Upload to server
-      const formData = new FormData();
-      formData.append('image', file);
-      
-      const response = await fetch('/api/images/upload', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include', // Include cookies for authentication
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upload image');
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Please upload a JPG, PNG, GIF, or WebP image');
       }
       
-      const result = await response.json();
-      setImageUrl(result.imageUrl);
-      setIsUploading(false);
-      setShowImageEditor(false);
-      setSelectedFile(null);
+      // Validate file size (max 2MB for base64)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxSize) {
+        throw new Error('Image must be smaller than 2MB. For larger images, please use an image URL instead.');
+      }
+      
+      // Compress and convert to base64 for now (we can implement proper upload later)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 800px width/height)
+        const maxSize = 800;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        setImageUrl(compressedDataUrl);
+        setIsUploading(false);
+      };
+      
+      img.onerror = () => {
+        setErrors(prev => ({ ...prev, imageUrl: "Failed to process image file" }));
+        setIsUploading(false);
+      };
+      
+      img.src = URL.createObjectURL(file);
       
     } catch (error) {
       setErrors(prev => ({ 
@@ -225,7 +234,7 @@ export function RecipeForm({
                 accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) handleFileSelect(file);
+                  if (file) handleImageUpload(file);
                 }}
                 className="hidden"
                 id="image-upload"
@@ -239,7 +248,7 @@ export function RecipeForm({
                     : 'border-gray-600 bg-gray-700 text-gray-400 hover:border-pink-500 hover:text-pink-400'
                 }`}
               >
-                {isUploading ? 'Uploading...' : '📷 Upload & Edit Image (JPG, PNG, GIF, WebP)'}
+                {isUploading ? 'Processing...' : '📷 Upload Image (JPG, PNG, GIF, WebP)'}
               </label>
               
               <input
@@ -347,18 +356,6 @@ export function RecipeForm({
           </button>
         </div>
       </div>
-
-      {/* Image Editor Modal */}
-      {showImageEditor && selectedFile && (
-        <ImageEditor
-          imageFile={selectedFile}
-          onSave={handleImageUpload}
-          onCancel={() => {
-            setShowImageEditor(false);
-            setSelectedFile(null);
-          }}
-        />
-      )}
     </div>
   );
 }
