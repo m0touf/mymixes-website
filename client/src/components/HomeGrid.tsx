@@ -62,20 +62,29 @@ export function HomeGrid({
                       src={r.imageUrl}
                       alt={r.title}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      style={{
+                        objectPosition: 'center center'
+                      }}
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-gray-500">
-                      No image
+                    <div className="flex h-full w-full flex-col items-center justify-center text-gray-500">
+                      <div className="mb-2 text-4xl">🍹</div>
+                      <div className="text-sm">No image</div>
                     </div>
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="line-clamp-1 text-lg font-semibold">{r.title}</h3>
+                  <h3 className="line-clamp-1 text-lg font-semibold text-white">{r.title}</h3>
                   <p className="mt-1 line-clamp-2 text-sm text-gray-400">
                     {r.description || r.method}
                   </p>
-                  <div className="mt-3 text-xs text-gray-500">
-                    {r._count?.ingredients || r.ingredients?.length || 0} ingredients
+                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                    <span>{r._count?.ingredients || r.ingredients?.length || 0} ingredients</span>
+                    {r.avgRating && r.avgRating > 0 && (
+                      <span className="flex items-center gap-1">
+                        ⭐ {r.avgRating.toFixed(1)}
+                      </span>
+                    )}
                   </div>
                 </div>
               </button>
