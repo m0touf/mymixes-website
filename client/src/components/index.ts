@@ -8,6 +8,5 @@ export { GuestGrid } from "./GuestGrid";
 export { EmptyState, EmptyGuestState } from "./EmptyState";
 export { RecipeDetail } from "./RecipeDetail";
 export { RecipeForm } from "./RecipeForm";
-export { ImageEditor } from "./ImageEditor";
 export { ReviewPage } from "./ReviewPage";
 export { QrManager } from "./QrManager";

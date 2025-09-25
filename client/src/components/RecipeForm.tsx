@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import type { RecipeFormProps, Ingredient } from "../types";
 import { uid, generateSlug, formatIngredients } from "../utils/helpers";
-import { ImageEditor } from "./ImageEditor";
 
 export function RecipeForm({
   mode,
@@ -26,7 +25,6 @@ export function RecipeForm({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
-  const [showImageEditor, setShowImageEditor] = useState(false);
 
   // Update ingredients when initial prop changes
   useEffect(() => {
@@ -230,65 +228,43 @@ export function RecipeForm({
           
           <label className="block text-sm">
             <span className="mb-1 block text-gray-400">Image</span>
-            <div className="space-y-3">
-              {/* Image Preview */}
-              {imageUrl && (
-                <div className="relative">
-                  <div className="aspect-square w-full max-w-xs overflow-hidden rounded-xl border border-gray-600 bg-gray-700">
-                    <img
-                      src={imageUrl}
-                      alt="Recipe preview"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowImageEditor(true)}
-                    className="absolute bottom-2 right-2 rounded-lg bg-pink-600 px-3 py-1 text-xs font-medium text-white hover:bg-pink-700"
-                  >
-                    ✏️ Edit
-                  </button>
-                </div>
-              )}
+            <div className="space-y-2">
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file);
+                }}
+                className="hidden"
+                id="image-upload"
+                disabled={isUploading}
+              />
+              <label
+                htmlFor="image-upload"
+                className={`block w-full cursor-pointer rounded-xl border border-dashed px-3 py-2 text-center text-sm transition-colors ${
+                  isUploading 
+                    ? 'border-yellow-500 bg-yellow-900/20 text-yellow-400' 
+                    : 'border-gray-600 bg-gray-700 text-gray-400 hover:border-pink-500 hover:text-pink-400'
+                }`}
+              >
+                {isUploading ? 'Processing...' : '📷 Upload Image (JPG, PNG, GIF, WebP)'}
+              </label>
               
-              <div className="space-y-2">
-                <input
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleImageUpload(file);
-                  }}
-                  className="hidden"
-                  id="image-upload"
-                  disabled={isUploading}
-                />
-                <label
-                  htmlFor="image-upload"
-                  className={`block w-full cursor-pointer rounded-xl border border-dashed px-3 py-2 text-center text-sm transition-colors ${
-                    isUploading 
-                      ? 'border-yellow-500 bg-yellow-900/20 text-yellow-400' 
-                      : 'border-gray-600 bg-gray-700 text-gray-400 hover:border-pink-500 hover:text-pink-400'
-                  }`}
-                >
-                  {isUploading ? 'Processing...' : '📷 Upload Image (JPG, PNG, GIF, WebP)'}
-                </label>
-                
-                <input
-                  className={`w-full rounded-xl border px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
-                    errors.imageUrl ? 'border-red-500 bg-red-900/20' : 'border-gray-600 bg-gray-700'
-                  }`}
-                  value={imageUrl}
-                  onChange={(e) => {
-                    setImageUrl(e.target.value);
-                    if (errors.imageUrl) setErrors(prev => ({ ...prev, imageUrl: "" }));
-                  }}
-                  placeholder="Or paste image URL here"
-                />
-                {errors.imageUrl && (
-                  <p className="text-xs text-red-400">{errors.imageUrl}</p>
-                )}
-              </div>
+              <input
+                className={`w-full rounded-xl border px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 ${
+                  errors.imageUrl ? 'border-red-500 bg-red-900/20' : 'border-gray-600 bg-gray-700'
+                }`}
+                value={imageUrl}
+                onChange={(e) => {
+                  setImageUrl(e.target.value);
+                  if (errors.imageUrl) setErrors(prev => ({ ...prev, imageUrl: "" }));
+                }}
+                placeholder="Or paste image URL here"
+              />
+              {errors.imageUrl && (
+                <p className="text-xs text-red-400">{errors.imageUrl}</p>
+              )}
             </div>
           </label>
         </div>
@@ -380,15 +356,6 @@ export function RecipeForm({
           </button>
         </div>
       </div>
-
-      {/* Image Editor Modal */}
-      {showImageEditor && imageUrl && (
-        <ImageEditor
-          imageUrl={imageUrl}
-          onImageChange={setImageUrl}
-          onClose={() => setShowImageEditor(false)}
-        />
-      )}
     </div>
   );
 }
