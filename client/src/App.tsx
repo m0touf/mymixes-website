@@ -162,9 +162,7 @@ export default function App() {
       setLoading(true);
       setError(null);
       const updatedRecipe = await updateRecipe(page.id, data);
-      setRecipes((prev) =>
-        prev.map((r) => (r.id === page.id ? updatedRecipe : r))
-      );
+      setRecipes(recipes.map((r) => (r.id === page.id ? updatedRecipe : r)));
       setCurrentRecipe(updatedRecipe);
       // Navigate to detail page using the updated recipe's slug
       setPage({ name: "detail", id: updatedRecipe.id });
