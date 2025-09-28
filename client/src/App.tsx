@@ -13,10 +13,9 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Use the recipes hook for fetching data
-  const { recipes, setRecipes, loading: recipesLoading, error: recipesError } = useRecipes(
+  const { recipes, setRecipes, loading: recipesLoading } = useRecipes(
     search, 
     page.name === "home" || page.name === "guest" || page.name === "landing"
   );
@@ -52,49 +51,29 @@ export default function App() {
     return urlParams.get('token');
   };
 
-  // Update loading and error states from recipes hook
-  useEffect(() => {
-    setLoading(recipesLoading);
-    setError(recipesError);
-  }, [recipesLoading, recipesError]);
-
   const goLanding = () => {
     // Logout when going back to landing page
     handleLogout();
     setPage({ name: "landing" });
   };
-  const goHome = async () => {
-    setIsTransitioning(true);
-    // Wait for recipes to load if they're not already loaded
-    if (recipes.length === 0 && !recipesLoading) {
-      // Give a moment for the recipes to start loading
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
+  const goHome = () => {
     setPage({ name: "home" });
-    setIsTransitioning(false);
   };
   
-  const goGuest = async () => {
-    setIsTransitioning(true);
+  const goGuest = () => {
     // Logout when switching to guest mode
     handleLogout();
-    // Wait for recipes to load if they're not already loaded
-    if (recipes.length === 0 && !recipesLoading) {
-      // Give a moment for the recipes to start loading
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
     setPage({ name: "guest" });
-    setIsTransitioning(false);
   };
   const goCreate = () => setPage({ name: "create" });
   const goQrManager = () => setPage({ name: "qr-manager" });
   
   const goDetail = async (id: number) => {
-    setIsTransitioning(true);
     const recipe = recipes.find((r) => r.id === id);
     if (recipe) {
       try {
         setLoading(true);
+        setError(null);
         // Fetch the full recipe details with ingredients and reviews
         const fullRecipe = await fetchRecipe(recipe.slug);
         setCurrentRecipe(fullRecipe);
@@ -103,34 +82,31 @@ export default function App() {
         setError(err instanceof Error ? err.message : 'Failed to load recipe details');
       } finally {
         setLoading(false);
-        setIsTransitioning(false);
       }
-    } else {
-      setIsTransitioning(false);
     }
   };
   
   const goEdit = async (id: number) => {
     // If we have a currentRecipe with ingredients, use it
     if (currentRecipe && currentRecipe.ingredients && currentRecipe.ingredients.length > 0) {
-      setCurrentRecipe(currentRecipe);
       setPage({ name: "edit", id });
       return;
     }
     
     // Otherwise, fetch the full recipe data
-    try {
-      setLoading(true);
-      const recipe = recipes.find((r) => r.id === id);
-      if (recipe) {
+    const recipe = recipes.find((r) => r.id === id);
+    if (recipe) {
+      try {
+        setLoading(true);
+        setError(null);
         const fullRecipe = await fetchRecipe(recipe.slug);
         setCurrentRecipe(fullRecipe);
         setPage({ name: "edit", id });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load recipe for editing');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load recipe for editing');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -184,6 +160,7 @@ export default function App() {
     
     try {
       setLoading(true);
+      setError(null);
       const updatedRecipe = await updateRecipe(page.id, data);
       setRecipes((prev) =>
         prev.map((r) => (r.id === page.id ? updatedRecipe : r))
@@ -191,21 +168,10 @@ export default function App() {
       setCurrentRecipe(updatedRecipe);
       // Navigate to detail page using the updated recipe's slug
       setPage({ name: "detail", id: updatedRecipe.id });
-      setIsTransitioning(true);
-      try {
-        setLoading(true);
-        // Fetch the full recipe details with ingredients and reviews using the updated slug
-        const fullRecipe = await fetchRecipe(updatedRecipe.slug);
-        setCurrentRecipe(fullRecipe);
-      } catch (err) {
-        console.error('Error fetching updated recipe:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch updated recipe');
-      } finally {
-        setLoading(false);
-        setIsTransitioning(false);
-      }
+      // Fetch the full recipe details with ingredients and reviews using the updated slug
+      const fullRecipe = await fetchRecipe(updatedRecipe.slug);
+      setCurrentRecipe(fullRecipe);
     } catch (err) {
-      console.error('Error updating recipe:', err);
       setError(err instanceof Error ? err.message : 'Failed to update recipe');
     } finally {
       setLoading(false);
@@ -215,13 +181,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       {/* Loading Overlay */}
-      {(loading || isTransitioning || recipesLoading) && (
+      {(loading || recipesLoading) && (
         <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700">
             <div className="flex items-center space-x-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-400"></div>
               <span className="text-lg font-medium text-gray-100">
-                {isTransitioning ? "Loading page..." : "Loading recipes..."}
+                Loading...
               </span>
             </div>
           </div>

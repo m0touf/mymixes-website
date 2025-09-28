@@ -51,7 +51,7 @@ export function GuestGrid({
           {recipes.map((r) => (
             <article
               key={r.id}
-              className="group overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm transition hover:shadow-md hover:border-gray-600"
+              className="group overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm transition hover:shadow-md hover:border-pink-500 hover:bg-pink-500/5"
             >
               <button onClick={() => onOpen(r.id)} className="block w-full text-left">
                 <div className="aspect-square w-full overflow-hidden bg-gray-700">

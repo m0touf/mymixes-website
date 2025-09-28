@@ -160,6 +160,7 @@ export function RecipeForm({
         description: description.trim() || undefined,
         method: method.trim(),
         ingredients: ingredients.map((i) => ({
+          id: i.id,
           name: i.name.trim(),
           amount: i.amount.trim(),
         })),
@@ -475,8 +476,6 @@ export function RecipeForm({
           src={imageToCrop}
           onCropComplete={handleCropComplete}
           onClose={handleCropperClose}
-          recipeTitle={title}
-          recipeDescription={description}
         />
       )}
     </div>

@@ -11,7 +11,7 @@ export type Page =
   | { name: "qr-manager" };
 
 // ---- Component Types ----
-export type Ingredient = { 
+export interface Ingredient { 
   id: string; 
   name: string; 
   amount: string; 
@@ -24,7 +24,7 @@ export type RecipeFormData = {
   imageUrl?: string;
   description?: string;
   method: string;
-  ingredients: { id?: string; name: string; amount: string }[];
+  ingredients: Ingredient[];
 };
 
 // ---- Props Types ----
