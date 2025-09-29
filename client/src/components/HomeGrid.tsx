@@ -1,5 +1,5 @@
 import type { HomeGridProps } from "../types";
-import { EmptyState } from ".";
+import { EmptyState, StarRating } from ".";
 
 export function HomeGrid({
   isAdmin,
@@ -74,8 +74,9 @@ export function HomeGrid({
                   <p className="mt-1 line-clamp-2 text-sm text-gray-400">
                     {r.description || r.method}
                   </p>
-                  <div className="mt-3 text-xs text-gray-500">
-                    {r._count?.ingredients || r.ingredients?.length || 0} ingredients
+                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                    <span>{r._count?.ingredients || r.ingredients?.length || 0} ingredients</span>
+                    <StarRating rating={r.avgRating} size="sm" showNumber={true} />
                   </div>
                 </div>
               </button>
@@ -102,9 +103,6 @@ export function HomeGrid({
                 <p className="mt-1 text-sm text-gray-400 group-hover:text-pink-300">
                   Create a new cocktail recipe
                 </p>
-                <div className="mt-3 text-xs text-gray-500 group-hover:text-pink-300">
-                  Click to start
-                </div>
               </div>
             </button>
           )}

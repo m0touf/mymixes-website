@@ -11,3 +11,4 @@ export { RecipeForm } from "./RecipeForm";
 export { ReviewPage } from "./ReviewPage";
 export { QrManager } from "./QrManager";
 export { ImageCropper } from "./ImageCropper";
+export { StarRating } from "./StarRating";
