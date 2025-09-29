@@ -13,6 +13,7 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recipeCache, setRecipeCache] = useState<Map<number, Recipe>>(new Map());
 
   // Use the recipes hook for fetching data
   const { recipes, setRecipes, loading: recipesLoading } = useRecipes(
@@ -69,6 +70,14 @@ export default function App() {
   const goQrManager = () => setPage({ name: "qr-manager" });
   
   const goDetail = async (id: number) => {
+    // Check if we already have the full recipe data cached
+    const cachedRecipe = recipeCache.get(id);
+    if (cachedRecipe) {
+      setCurrentRecipe(cachedRecipe);
+      setPage({ name: "detail", id });
+      return;
+    }
+
     const recipe = recipes.find((r) => r.id === id);
     if (recipe) {
       try {
@@ -77,6 +86,8 @@ export default function App() {
         // Fetch the full recipe details with ingredients and reviews
         const fullRecipe = await fetchRecipe(recipe.slug);
         setCurrentRecipe(fullRecipe);
+        // Cache the full recipe data
+        setRecipeCache(prev => new Map(prev).set(id, fullRecipe));
         setPage({ name: "detail", id });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load recipe details');
@@ -87,6 +98,14 @@ export default function App() {
   };
   
   const goEdit = async (id: number) => {
+    // Check cache first
+    const cachedRecipe = recipeCache.get(id);
+    if (cachedRecipe) {
+      setCurrentRecipe(cachedRecipe);
+      setPage({ name: "edit", id });
+      return;
+    }
+
     // If we have a currentRecipe with ingredients, use it
     if (currentRecipe && currentRecipe.ingredients && currentRecipe.ingredients.length > 0) {
       setPage({ name: "edit", id });
@@ -101,6 +120,8 @@ export default function App() {
         setError(null);
         const fullRecipe = await fetchRecipe(recipe.slug);
         setCurrentRecipe(fullRecipe);
+        // Cache the full recipe data
+        setRecipeCache(prev => new Map(prev).set(id, fullRecipe));
         setPage({ name: "edit", id });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load recipe for editing');
@@ -118,6 +139,12 @@ export default function App() {
       await deleteRecipe(currentRecipe.id);
       // Remove from local recipes list
       setRecipes(recipes.filter(r => r.id !== currentRecipe.id));
+      // Remove from cache
+      setRecipeCache(prev => {
+        const newCache = new Map(prev);
+        newCache.delete(currentRecipe.id);
+        return newCache;
+      });
       // Go back to home
       await goHome();
     } catch (err) {
@@ -169,6 +196,8 @@ export default function App() {
       // Fetch the full recipe details with ingredients and reviews using the updated slug
       const fullRecipe = await fetchRecipe(updatedRecipe.slug);
       setCurrentRecipe(fullRecipe);
+      // Update the cache with the new full recipe data
+      setRecipeCache(prev => new Map(prev).set(updatedRecipe.id, fullRecipe));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update recipe');
     } finally {
