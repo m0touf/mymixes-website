@@ -158,6 +158,7 @@ export default function App() {
   const handleLogin = async (pwd: string) => {
     try {
       setLoading(true);
+      setError(null); // Clear any previous error before attempting login
       await authHandleLogin(pwd);
       await goHome();
     } catch (err) {
