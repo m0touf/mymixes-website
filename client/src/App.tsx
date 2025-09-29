@@ -70,6 +70,9 @@ export default function App() {
   const goQrManager = () => setPage({ name: "qr-manager" });
   
   const goDetail = async (id: number) => {
+    // Clear any previous errors when navigating
+    setError(null);
+    
     // Check if we already have the full recipe data cached
     const cachedRecipe = recipeCache.get(id);
     if (cachedRecipe) {
@@ -98,6 +101,9 @@ export default function App() {
   };
   
   const goEdit = async (id: number) => {
+    // Clear any previous errors when navigating
+    setError(null);
+    
     // Check cache first
     const cachedRecipe = recipeCache.get(id);
     if (cachedRecipe) {

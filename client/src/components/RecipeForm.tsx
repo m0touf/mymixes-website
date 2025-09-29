@@ -29,6 +29,19 @@ export function RecipeForm({
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string>("");
 
+  // Clear errors when component unmounts or mode changes
+  useEffect(() => {
+    return () => {
+      setErrors({});
+    };
+  }, [mode]);
+
+  // Handle cancel with error clearing
+  const handleCancel = () => {
+    setErrors({});
+    onCancel();
+  };
+
   // Update ingredients when initial prop changes
   useEffect(() => {
     if (initial?.ingredients && mode === "edit") {
@@ -184,7 +197,7 @@ export function RecipeForm({
   return (
     <div className="mx-auto max-w-7xl">
       <div className="mb-4 flex items-center justify-between">
-        <button onClick={onCancel} className="text-sm text-gray-400 hover:underline">
+        <button onClick={handleCancel} className="text-sm text-gray-400 hover:underline">
           ← {mode === "create" ? "Cancel" : "Back"}
         </button>
         <h1 className="text-xl font-semibold">
@@ -360,7 +373,7 @@ export function RecipeForm({
 
             <div className="flex items-center justify-end gap-2">
               <button
-                onClick={onCancel}
+                onClick={handleCancel}
                 className="rounded-xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
               >
                 Cancel
