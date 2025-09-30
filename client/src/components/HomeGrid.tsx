@@ -1,5 +1,5 @@
 import type { HomeGridProps } from "../types";
-import { EmptyState } from ".";
+import { EmptyState, StarRating } from ".";
 
 export function HomeGrid({
   isAdmin,
@@ -56,7 +56,7 @@ export function HomeGrid({
               className="group overflow-hidden rounded-2xl border border-gray-700 bg-gray-800 shadow-sm transition hover:shadow-md hover:border-pink-500 hover:bg-pink-500/5"
             >
               <button onClick={() => onOpen(r.id)} className="block w-full text-left">
-                <div className="aspect-video w-full overflow-hidden bg-gray-700">
+                <div className="aspect-square w-full overflow-hidden bg-gray-700">
                   {r.imageUrl ? (
                     <img
                       src={r.imageUrl}
@@ -74,8 +74,9 @@ export function HomeGrid({
                   <p className="mt-1 line-clamp-2 text-sm text-gray-400">
                     {r.description || r.method}
                   </p>
-                  <div className="mt-3 text-xs text-gray-500">
-                    {r._count?.ingredients || r.ingredients?.length || 0} ingredients
+                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+                    <span>{r._count?.ingredients || r.ingredients?.length || 0} ingredients</span>
+                    <StarRating rating={r.avgRating} size="sm" showNumber={true} />
                   </div>
                 </div>
               </button>
@@ -88,7 +89,7 @@ export function HomeGrid({
               onClick={onCreate}
               className="group overflow-hidden rounded-2xl border-2 border-dashed border-gray-600 bg-gray-800/50 transition hover:border-pink-500 hover:bg-pink-500/10"
             >
-              <div className="aspect-video w-full overflow-hidden bg-gray-700/50 flex items-center justify-center">
+              <div className="aspect-square w-full overflow-hidden bg-gray-700/50 flex items-center justify-center">
                 <div className="text-center">
                   <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full border-2 border-gray-400 bg-gray-700 text-gray-400 transition group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-pink-500">
                     <span className="text-3xl font-light">+</span>
@@ -102,9 +103,6 @@ export function HomeGrid({
                 <p className="mt-1 text-sm text-gray-400 group-hover:text-pink-300">
                   Create a new cocktail recipe
                 </p>
-                <div className="mt-3 text-xs text-gray-500 group-hover:text-pink-300">
-                  Click to start
-                </div>
               </div>
             </button>
           )}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Recipe } from "../services/api";
+import { generateStyledQRCode, downloadQRCode } from "../utils/qrGenerator";
 
 // Dynamic API configuration (same as main API service)
 const getApiBase = () => {
@@ -25,6 +26,7 @@ interface QrToken {
     title: string;
     slug: string;
   };
+  qrImageDataUrl?: string;
 }
 
 interface QrManagerProps {
@@ -38,6 +40,7 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
   const [qrCounts, setQrCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generatingQrImages, setGeneratingQrImages] = useState<Set<string>>(new Set());
 
   // Fetch existing QR tokens
   const fetchQrTokens = async () => {
@@ -86,6 +89,42 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
     }
   };
 
+  // Generate QR code image for a token
+  const generateQrImage = async (token: QrToken) => {
+    if (token.qrImageDataUrl) return; // Already generated
+    
+    setGeneratingQrImages(prev => new Set(prev).add(token.id));
+    
+    try {
+      const qrImageDataUrl = await generateStyledQRCode(token.qrUrl, true);
+      
+      setQrTokens(prev => prev.map(t => 
+        t.id === token.id 
+          ? { ...t, qrImageDataUrl }
+          : t
+      ));
+    } catch (error) {
+      console.error('Error generating QR image:', error);
+    } finally {
+      setGeneratingQrImages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(token.id);
+        return newSet;
+      });
+    }
+  };
+
+  // Download QR code image
+  const downloadQrImage = (token: QrToken) => {
+    if (!token.qrImageDataUrl) return;
+    
+    const filename = `${token.recipe?.title || `recipe-${token.recipeId}`}-qr.png`
+      .replace(/[^a-z0-9]/gi, '-')
+      .toLowerCase();
+    
+    downloadQRCode(token.qrImageDataUrl, filename);
+  };
+
   useEffect(() => {
     fetchQrTokens();
     fetchQrCounts();
@@ -118,6 +157,15 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
       }
 
       const newToken = await response.json();
+      
+      // Generate QR image for the new token
+      try {
+        const qrImageDataUrl = await generateStyledQRCode(newToken.qrUrl, true);
+        newToken.qrImageDataUrl = qrImageDataUrl;
+      } catch (error) {
+        console.error('Error generating QR image for new token:', error);
+      }
+      
       setQrTokens(prev => [newToken, ...prev]);
       setSelectedRecipeId(null);
       // Refresh counts after creating a new QR token
@@ -226,7 +274,32 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
           <div className="space-y-4">
             {qrTokens.map((token) => (
               <div key={token.id} className="rounded-xl border border-gray-700 bg-gray-700/50 p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  {/* QR Code Image */}
+                  <div className="flex-shrink-0">
+                    {token.qrImageDataUrl ? (
+                      <img
+                        src={token.qrImageDataUrl}
+                        alt={`QR Code for ${token.recipe?.title || `Recipe ${token.recipeId}`}`}
+                        className="w-32 h-32 rounded-lg border border-gray-600"
+                      />
+                    ) : (
+                      <div className="w-32 h-32 rounded-lg border border-gray-600 bg-gray-800 flex items-center justify-center">
+                        {generatingQrImages.has(token.id) ? (
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-pink-500"></div>
+                        ) : (
+                          <button
+                            onClick={() => generateQrImage(token)}
+                            className="text-gray-400 hover:text-pink-400 text-xs"
+                          >
+                            Generate QR
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Token Info */}
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-200">
                       {token.recipe?.title || `Recipe ID: ${token.recipeId}`}
@@ -242,6 +315,8 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
                       )}
                     </p>
                   </div>
+                  
+                  {/* Action Buttons */}
                   <div className="flex flex-col gap-2">
                     <button
                       onClick={() => navigator.clipboard.writeText(token.qrUrl)}
@@ -249,6 +324,14 @@ export function QrManager({ recipes, onBack }: QrManagerProps) {
                     >
                       Copy URL
                     </button>
+                    {token.qrImageDataUrl && (
+                      <button
+                        onClick={() => downloadQrImage(token)}
+                        className="rounded-lg border border-pink-600 bg-pink-700/20 px-3 py-1 text-sm text-pink-400 hover:bg-pink-700/30"
+                      >
+                        Download QR
+                      </button>
+                    )}
                     <a
                       href={token.qrUrl}
                       target="_blank"

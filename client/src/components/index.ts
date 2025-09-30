@@ -10,3 +10,6 @@ export { RecipeDetail } from "./RecipeDetail";
 export { RecipeForm } from "./RecipeForm";
 export { ReviewPage } from "./ReviewPage";
 export { QrManager } from "./QrManager";
+export { QRCodeDisplay } from "./QRCodeDisplay";
+export { ImageCropper } from "./ImageCropper";
+export { StarRating } from "./StarRating";

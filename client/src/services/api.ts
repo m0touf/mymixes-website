@@ -48,7 +48,7 @@ export interface Recipe {
   imageUrl?: string;
   description?: string;
   method: string;
-  ingredients: Ingredient[];
+  ingredients: ServerIngredient[];
   reviews?: Review[];
   avgRating?: number;
   createdAt: string;
@@ -60,7 +60,8 @@ export interface Recipe {
   };
 }
 
-export interface Ingredient {
+// Server-side Ingredient interface (different from client-side form Ingredient)
+export interface ServerIngredient {
   id: number;
   name: string;
   amount: string;
@@ -85,14 +86,8 @@ export interface CreateRecipeData {
   }[];
 }
 
-export interface RecipesResponse {
-  items: Recipe[];
-  total: number;
-  page: number;
-  size: number;
-}
 
-export async function fetchRecipes(query?: string, page = 1, size = 12): Promise<RecipesResponse> {
+export async function fetchRecipes(query?: string, page = 1, size = 12): Promise<Recipe[]> {
   const params = new URLSearchParams();
   if (query) params.append('query', query);
   params.append('page', page.toString());
@@ -102,7 +97,8 @@ export async function fetchRecipes(query?: string, page = 1, size = 12): Promise
   if (!response.ok) {
     throw new Error(`Failed to fetch recipes: ${response.statusText}`);
   }
-  return response.json();
+  const data = await response.json();
+  return data.items || data;
 }
 
 export async function fetchRecipe(slug: string): Promise<Recipe> {
@@ -125,7 +121,8 @@ export async function createRecipe(data: CreateRecipeData): Promise<Recipe> {
       removeAuthToken();
       throw new Error('Authentication required');
     }
-    throw new Error(`Failed to create recipe: ${response.statusText}`);
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.error || `Failed to create recipe: ${response.statusText}`);
   }
   return response.json();
 }
@@ -142,9 +139,8 @@ export async function updateRecipe(id: number, data: CreateRecipeData): Promise<
       removeAuthToken();
       throw new Error('Authentication required');
     }
-    // Read the error details from the response body
-    const errorBody = await response.json();
-    throw new Error(`Failed to update recipe: ${errorBody.error ? JSON.stringify(errorBody.error) : response.statusText}`);
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.error || `Failed to update recipe: ${response.statusText}`);
   }
   return response.json();
 }
@@ -160,7 +156,8 @@ export async function deleteRecipe(id: number): Promise<void> {
       removeAuthToken();
       throw new Error('Authentication required');
     }
-    throw new Error(`Failed to delete recipe: ${response.statusText}`);
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.error || `Failed to delete recipe: ${response.statusText}`);
   }
 }
 
@@ -182,7 +179,7 @@ export async function login(password: string): Promise<LoginResponse> {
   });
 
   if (!response.ok) {
-    const errorBody = await response.json();
+    const errorBody = await response.json().catch(() => ({}));
     throw new Error(errorBody.error || 'Login failed');
   }
 

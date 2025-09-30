@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { RecipeFormProps, Ingredient } from "../types";
 import { uid, generateSlug, formatIngredients } from "../utils/helpers";
+import { ImageCropper } from "./ImageCropper";
 
 export function RecipeForm({
   mode,
@@ -25,6 +26,21 @@ export function RecipeForm({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string>("");
+
+  // Clear errors when component unmounts or mode changes
+  useEffect(() => {
+    return () => {
+      setErrors({});
+    };
+  }, [mode]);
+
+  // Handle cancel with error clearing
+  const handleCancel = () => {
+    setErrors({});
+    onCancel();
+  };
 
   // Update ingredients when initial prop changes
   useEffect(() => {
@@ -58,27 +74,11 @@ export function RecipeForm({
         throw new Error('Please upload a JPG, PNG, GIF, or WebP image');
       }
       
-      // Validate file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        throw new Error('Image must be smaller than 10MB');
-      }
-      
-      // Convert to base64 for now (we can implement proper upload later)
-      const reader = new FileReader();
-      
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        setImageUrl(base64String);
-        setIsUploading(false);
-      };
-      
-      reader.onerror = () => {
-        setErrors(prev => ({ ...prev, imageUrl: "Failed to read image file" }));
-        setIsUploading(false);
-      };
-      
-      reader.readAsDataURL(file);
+      // Create object URL for cropping
+      const imageUrl = URL.createObjectURL(file);
+      setImageToCrop(imageUrl);
+      setShowCropper(true);
+      setIsUploading(false);
       
     } catch (error) {
       setErrors(prev => ({ 
@@ -86,6 +86,36 @@ export function RecipeForm({
         imageUrl: error instanceof Error ? error.message : "Failed to upload image. Please try again or use a URL instead." 
       }));
       setIsUploading(false);
+    }
+  };
+
+  const handleCropComplete = (croppedImageUrl: string) => {
+    // Convert blob URL to base64 for storage
+    fetch(croppedImageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImageUrl(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
+      });
+    
+    setShowCropper(false);
+    setImageToCrop("");
+    
+    // Clean up the blob URL
+    URL.revokeObjectURL(croppedImageUrl);
+  };
+
+  const handleCropperClose = () => {
+    setShowCropper(false);
+    setImageToCrop("");
+    setIsUploading(false);
+    
+    // Clean up the blob URL
+    if (imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
     }
   };
 
@@ -143,6 +173,7 @@ export function RecipeForm({
         description: description.trim() || undefined,
         method: method.trim(),
         ingredients: ingredients.map((i) => ({
+          id: i.id,
           name: i.name.trim(),
           amount: i.amount.trim(),
         })),
@@ -164,9 +195,9 @@ export function RecipeForm({
     isUploading;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-7xl">
       <div className="mb-4 flex items-center justify-between">
-        <button onClick={onCancel} className="text-sm text-gray-400 hover:underline">
+        <button onClick={handleCancel} className="text-sm text-gray-400 hover:underline">
           ← {mode === "create" ? "Cancel" : "Back"}
         </button>
         <h1 className="text-xl font-semibold">
@@ -175,7 +206,10 @@ export function RecipeForm({
         <div />
       </div>
 
-      <div className="space-y-6 rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Form Section */}
+        <div className="lg:col-span-2">
+          <div className="space-y-6 rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm">
         {/* General Error Message */}
         {errors.general && (
           <div className="rounded-xl bg-red-900/20 border border-red-600 p-3">
@@ -224,7 +258,7 @@ export function RecipeForm({
                     : 'border-gray-600 bg-gray-700 text-gray-400 hover:border-pink-500 hover:text-pink-400'
                 }`}
               >
-                {isUploading ? 'Processing...' : '📷 Upload Image (JPG, PNG, GIF, WebP)'}
+                {isUploading ? 'Processing...' : '📷 Upload & Crop Image (Any Size)'}
               </label>
               
               <input
@@ -240,6 +274,29 @@ export function RecipeForm({
               />
               {errors.imageUrl && (
                 <p className="text-xs text-red-400">{errors.imageUrl}</p>
+              )}
+              
+              {/* Small Image Preview */}
+              {imageUrl && (
+                <div className="relative">
+                  <img
+                    src={imageUrl}
+                    alt="Recipe preview"
+                    className="w-full max-w-sm rounded-xl border border-gray-600 object-cover"
+                    style={{ maxHeight: '150px' }}
+                    onError={() => {
+                      setErrors(prev => ({ ...prev, imageUrl: "Failed to load image" }));
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl("")}
+                    className="absolute right-2 top-2 rounded-full bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                    title="Remove image"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </div>
           </label>
@@ -314,24 +371,126 @@ export function RecipeForm({
           )}
         </label>
 
-        <div className="flex items-center justify-end gap-2">
-          <button
-            onClick={onCancel}
-            className="rounded-xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
-          >
-            Cancel
-          </button>
-          <button
-            disabled={disabled}
-            onClick={handleSubmit}
-            className={`rounded-xl px-4 py-2 text-sm font-medium text-white ${
-              disabled ? "cursor-not-allowed bg-neutral-300" : "bg-pink-600 hover:bg-pink-700"
-            }`}
-          >
-            {isUploading ? "Uploading..." : (mode === "create" ? "Create" : "Save changes")}
-          </button>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={handleCancel}
+                className="rounded-xl border border-gray-600 bg-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={disabled}
+                onClick={handleSubmit}
+                className={`rounded-xl px-4 py-2 text-sm font-medium text-white ${
+                  disabled ? "cursor-not-allowed bg-neutral-300" : "bg-pink-600 hover:bg-pink-700"
+                }`}
+              >
+                {isUploading ? "Uploading..." : (mode === "create" ? "Create" : "Save changes")}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Preview Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-4 space-y-6">
+            {/* Live Preview */}
+            <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm">
+              <h3 className="mb-4 text-lg font-semibold text-gray-200">Live Preview</h3>
+              
+              {imageUrl && title ? (
+                <div className="space-y-6">
+                  {/* List Card Preview */}
+                  <div>
+                    <div className="mb-3 text-sm font-medium text-gray-300">List Card</div>
+                    <article className="overflow-hidden rounded-xl border border-gray-600 bg-gray-700 shadow-sm">
+                      <div className="aspect-square w-full overflow-hidden bg-gray-600">
+                        <img
+                          src={imageUrl}
+                          alt={title}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="p-3">
+                        <h4 className="line-clamp-1 text-sm font-semibold">{title}</h4>
+                        <p className="mt-1 line-clamp-2 text-xs text-gray-400">
+                          {description || "Recipe description will appear here"}
+                        </p>
+                        <div className="mt-2 text-xs text-gray-500">
+                          {ingredients.length} ingredients
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+
+                  {/* Detail View Preview */}
+                  <div>
+                    <div className="mb-3 text-sm font-medium text-gray-300">Detail Page</div>
+                    <div className="overflow-hidden rounded-xl border border-gray-600 bg-gray-700 shadow-sm">
+                      <img 
+                        src={imageUrl} 
+                        alt={title} 
+                        className="aspect-video w-full object-cover" 
+                      />
+                      <div className="p-3">
+                        <h4 className="text-base font-semibold">{title}</h4>
+                        <p className="mt-1 text-xs text-gray-400">
+                          {description || "Recipe description will appear here"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gray-700 text-gray-400">
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-gray-400">
+                    Add a title and image to see previews
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Stats */}
+            <div className="rounded-2xl border border-gray-700 bg-gray-800 p-6 shadow-sm">
+              <h3 className="mb-4 text-lg font-semibold text-gray-200">Recipe Stats</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-400">Ingredients</span>
+                  <span className="text-sm font-medium text-gray-200">{ingredients.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-400">Title Length</span>
+                  <span className="text-sm font-medium text-gray-200">{title.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-400">Method Length</span>
+                  <span className="text-sm font-medium text-gray-200">{method.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-400">Has Image</span>
+                  <span className={`text-sm font-medium ${imageUrl ? 'text-green-400' : 'text-gray-500'}`}>
+                    {imageUrl ? 'Yes' : 'No'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Image Cropper Modal */}
+      {showCropper && (
+        <ImageCropper
+          src={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onClose={handleCropperClose}
+        />
+      )}
     </div>
   );
 }
